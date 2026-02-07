@@ -16,11 +16,6 @@ SECRET_KEY = os.environ.get(
     "django-insecure-change-me",
 )
 
-# Название и описание сайта
-SITE_NAME = os.environ.get("SITE_NAME", "Магазин")
-SITE_DESCRIPTION = os.environ.get("SITE_DESCRIPTION", "Интернет-магазин")
-
-
 INSTALLED_APPS = [
     "core",
     "django.contrib.admin",

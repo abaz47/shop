@@ -1,4 +1,4 @@
-/* Базовая палитра (милитари/тактик) */
+/* Базовая палитра */
 :root {
   --yt-dark-green: #2d3a2d;
   --yt-olive: #3d4a3d;
@@ -31,6 +31,16 @@ main {
   background-color: var(--yt-bg-dark) !important;
 }
 
+.navbar .nav-link,
+footer .footer-link {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.navbar .nav-link:hover,
+footer .footer-link:hover {
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .btn-primary {
   background-color: var(--yt-bronze);
   border-color: var(--yt-bronze);
@@ -43,5 +53,5 @@ main {
 
 footer {
   background-color: var(--yt-bg-dark);
-  color: var(--yt-gray-light);
+  color: rgba(255, 255, 255, 0.75);
 }

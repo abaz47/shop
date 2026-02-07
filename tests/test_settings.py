@@ -22,11 +22,3 @@ def test_staticfiles_dirs_configured():
     from django.conf import settings
     base = settings.BASE_DIR
     assert any(base / "static" == Path(p) for p in settings.STATICFILES_DIRS)
-
-
-def test_site_name_setting():
-    """SITE_NAME задан."""
-    from django.conf import settings
-    assert hasattr(settings, "SITE_NAME")
-    assert isinstance(settings.SITE_NAME, str)
-    assert len(settings.SITE_NAME) > 0

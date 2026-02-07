@@ -44,8 +44,15 @@
   </main>
 
   <footer class="py-4 mt-auto">
-    <div class="container text-center">
-      <small>&copy; {% now "Y" %} {{ site_name }}</small>
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-center justify-content-md-between align-items-center gap-2">
+        <small>&copy; {% now "Y" %} {{ site_name }}</small>
+        <nav class="d-flex flex-wrap justify-content-center gap-2 gap-md-3">
+          {% for slug, label in footer_legal_links %}
+            <a href="{% url 'core:legal_page' slug %}" class="footer-link text-decoration-none small">{{ label }}</a>
+          {% endfor %}
+        </nav>
+      </div>
     </div>
   </footer>
 

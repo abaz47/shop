@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <article class="py-4">
+    <h1 class="mb-4">{{ page.title }}</h1>
+    {% if page.content %}
+      <div class="legal-content">
+        {{ page.content|safe }}
+      </div>
+    {% else %}
+      <p class="text-body-secondary">Страница в разработке.</p>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}
