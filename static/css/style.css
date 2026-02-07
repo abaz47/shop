@@ -1,0 +1,47 @@
+/* Базовая палитра (милитари/тактик) */
+:root {
+  --yt-dark-green: #2d3a2d;
+  --yt-olive: #3d4a3d;
+  --yt-accent: #9acd32;
+  --yt-accent-hover: #8fbc8f;
+  --yt-bronze: #b8860b;
+  --yt-bronze-light: #cd9b1d;
+  --yt-gray: #4a4a4a;
+  --yt-gray-light: #6b6b6b;
+  --yt-bg-dark: #1e261e;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+.navbar-brand,
+.site-title {
+  color: var(--yt-accent) !important;
+  font-weight: 700;
+}
+
+.navbar {
+  background-color: var(--yt-bg-dark) !important;
+}
+
+.btn-primary {
+  background-color: var(--yt-bronze);
+  border-color: var(--yt-bronze);
+}
+
+.btn-primary:hover {
+  background-color: var(--yt-bronze-light);
+  border-color: var(--yt-bronze-light);
+}
+
+footer {
+  background-color: var(--yt-bg-dark);
+  color: var(--yt-gray-light);
+}
