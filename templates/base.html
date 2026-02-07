@@ -24,6 +24,11 @@
           <li class="nav-item">
             <a class="nav-link" href="{% url 'core:home' %}">Главная</a>
           </li>
+          {% for slug, label in header_page_links %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'core:legal_page' slug %}">{{ label }}</a>
+          </li>
+          {% endfor %}
         </ul>
       </div>
     </div>

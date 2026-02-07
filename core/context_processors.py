@@ -3,13 +3,19 @@
 """
 from django.db import OperationalError
 
-# Ссылки для футера (slug → текст ссылки), порядок вывода
+# Ссылки футера
 FOOTER_LEGAL_LINKS = [
     ("terms", "Пользовательское соглашение"),
     ("privacy", "Политика конфиденциальности"),
     ("offer", "Оферта"),
     ("requisites", "Реквизиты"),
     ("return", "Возврат и обмен"),
+]
+
+# Ссылки хэдера
+HEADER_PAGE_LINKS = [
+    ("payment_delivery", "Оплата и доставка"),
+    ("contacts", "Контакты"),
 ]
 
 DEFAULT_SITE_NAME = "Магазин"
@@ -42,4 +48,5 @@ def site(request):
         "site_name": site_name,
         "site_description": site_description,
         "footer_legal_links": FOOTER_LEGAL_LINKS,
+        "header_page_links": HEADER_PAGE_LINKS,
     }
