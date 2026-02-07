@@ -20,6 +20,7 @@ SECRET_KEY = os.environ.get(
 SITE_NAME = os.environ.get("SITE_NAME", "Магазин")
 SITE_DESCRIPTION = os.environ.get("SITE_DESCRIPTION", "Интернет-магазин")
 
+
 INSTALLED_APPS = [
     "core",
     "django.contrib.admin",
@@ -60,7 +61,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# PostgreSQL из DATABASE_URL (формат: postgresql://user:password@host:port/dbname)
+# PostgreSQL из DATABASE_URL
+# (формат: postgresql://user:password@host:port/dbname)
 _db_url = os.environ.get("DATABASE_URL", "")
 if _db_url:
     _parsed = urlparse(_db_url)
@@ -84,10 +86,25 @@ else:
     }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME":
+            "django.contrib.auth."
+            "password_validation.UserAttributeSimilarityValidator"
+    },
+    {
+        "NAME":
+            "django.contrib.auth."
+            "password_validation.MinimumLengthValidator"
+    },
+    {
+        "NAME":
+            "django.contrib.auth."
+            "password_validation.CommonPasswordValidator"},
+    {
+        "NAME":
+            "django.contrib.auth."
+            "password_validation.NumericPasswordValidator"
+    },
 ]
 
 LANGUAGE_CODE = "ru-ru"
