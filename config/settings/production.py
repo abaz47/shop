@@ -17,3 +17,17 @@ if not ALLOWED_HOSTS and not DEBUG:
     ALLOWED_HOSTS = ["localhost"]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Хранение статических файлов (отдаёт nginx)
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+# Для корректной работы CSRF за обратным прокси/HTTPS
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]

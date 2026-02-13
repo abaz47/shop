@@ -63,6 +63,9 @@ db.sqlite3-journal
 media/
 staticfiles/
 
+# SSL-сертификаты (certbot)
+certbot/
+
 # Flask stuff:
 instance/
 .webassets-cache
