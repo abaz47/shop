@@ -45,19 +45,19 @@ nano .env
 
 **Обязательно заполнить в `.env`:**
 ```env
-SECRET_KEY=длинная-случайная-строка-минимум-50-символов
+SECRET_KEY=secret-key-50-characters-long
 DEBUG=false
-ALLOWED_HOSTS=yarmettaktik.shop,www.yarmettaktik.shop
-CSRF_TRUSTED_ORIGINS=https://yarmettaktik.shop,https://www.yarmettaktik.shop
+ALLOWED_HOSTS=yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com
 
-POSTGRES_USER=shop
-POSTGRES_PASSWORD=надёжный-пароль
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
 POSTGRES_DB=shop_db
 
 DJANGO_SETTINGS_MODULE=config.settings.production
 
 # SSL/Let's Encrypt
-ADMIN_EMAIL=admin@yarmettaktik.shop
+ADMIN_EMAIL=admin@yourdomain.com
 SSL_STAGING=0  # 0 = боевой сертификат, 1 = тестовый
 ```
 
@@ -79,7 +79,7 @@ chmod +x scripts/init-letsencrypt.sh
 docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
 
-Админка: `https://yarmettaktik.shop/admin/`
+Админка: `https://yourdomain.com/admin/`
 
 ---
 
@@ -117,4 +117,3 @@ docker compose -f docker-compose.prod.yml down
 ## Автоматическое обновление SSL-сертификатов
 
 Контейнер `certbot` автоматически обновляет SSL-сертификаты каждые 12 часов и перезагружает nginx. Никаких действий не требуется.
-
