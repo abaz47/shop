@@ -3,10 +3,10 @@ from types import SimpleNamespace
 from django.http import Http404
 from django.shortcuts import render
 
-from .context_processors import FOOTER_LEGAL_LINKS
+from .context_processors import FOOTER_LEGAL_LINKS, HEADER_PAGE_LINKS
 from .models import LegalPage
 
-SLUG_TO_TITLE = dict(FOOTER_LEGAL_LINKS)
+SLUG_TO_TITLE = dict(FOOTER_LEGAL_LINKS + HEADER_PAGE_LINKS)
 
 
 def home(request):

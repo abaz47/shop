@@ -45,6 +45,13 @@ class TestHomeView:
         assert "Реквизиты" in html
         assert "Возврат и обмен" in html
 
+    def test_home_header_contains_page_links(self, client):
+        """В шапке есть ссылки «Оплата и доставка» и «Контакты»."""
+        response = client.get(reverse("core:home"))
+        html = response.content.decode()
+        assert "Оплата и доставка" in html
+        assert "Контакты" in html
+
 
 @pytest.mark.django_db
 class TestLegalPageView:
@@ -82,4 +89,15 @@ class TestLegalPageView:
         assert response.status_code == 200
         html = response.content.decode()
         assert "Политика конфиденциальности" in html
-        assert "Содержимое страницы пока не заполнено" in html
+        assert "Страница в разработке" in html
+
+    def test_header_page_stub(self, client):
+        """Страница из шапки (Оплата и доставка) открывается заглушкой."""
+        response = client.get(reverse(
+            "core:legal_page",
+            kwargs={"slug": "payment_delivery"}
+        ))
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert "Оплата и доставка" in html
+        assert "Страница в разработке" in html

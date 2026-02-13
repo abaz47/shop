@@ -45,6 +45,8 @@ class LegalPage(models.Model):
         ("offer", "Оферта"),
         ("requisites", "Реквизиты"),
         ("return", "Возврат и обмен"),
+        ("payment_delivery", "Оплата и доставка"),
+        ("contacts", "Контакты"),
     ]
 
     slug = models.SlugField(
