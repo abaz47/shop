@@ -214,6 +214,7 @@ certbot/
 # Nginx (сгенерированные конфиги из шаблонов)
 nginx/conf.d/app.conf
 nginx/conf.d/app-http-only.conf
+nginx/conf.d/app-http-only.conf.disabled
 nginx/conf.d/app.conf.backup
 # Шаблоны остаются в репозитории
 !nginx/conf.d/templates/

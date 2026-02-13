@@ -146,6 +146,12 @@ else
   cp "$HTTP_CONF" nginx/conf.d/app.conf
 fi
 
+# Чтобы nginx не загружал два server_name на порт 80, оставляем только app.conf
+if [ -f "nginx/conf.d/app-http-only.conf" ]; then
+  mv nginx/conf.d/app-http-only.conf nginx/conf.d/app-http-only.conf.disabled
+  echo "✓ HTTP-only конфиг отключён (содержимое уже в app.conf)"
+fi
+
 # Примечание: nginx загружает все .conf файлы в директории
 # upstream.conf будет загружен автоматически и доступен для обоих конфигов
 
@@ -249,7 +255,7 @@ chmod 644 "$DATA_PATH/www/.well-known/acme-challenge/$TEST_FILE" 2>/dev/null || 
 # Проверяем, что файл виден в контейнере nginx
 echo "    Проверка доступности файла в контейнере nginx..."
 sleep 2
-if $COMPOSE exec -T nginx test -f "/var/www/certbot/$TEST_FILE" 2>/dev/null; then
+if $COMPOSE exec -T nginx test -f "/var/www/certbot/.well-known/acme-challenge/$TEST_FILE" 2>/dev/null; then
   echo "✓ Файл доступен в контейнере nginx"
 else
   echo "⚠️  Файл не найден в контейнере nginx"
@@ -538,13 +544,19 @@ if [ -n "$CERT_DIR" ] && [ -e "$CERT_DIR/fullchain.pem" ] && [ -e "$CERT_DIR/pri
         echo "✓ Конфиг обновлён для использования сертификата из $CERT_NAME"
       fi
       echo "✓ HTTPS конфиг восстановлен"
+    else
+      echo "⚠️  Резервная копия HTTPS конфига не найдена"
+      echo "    Убедитесь, что nginx/conf.d/app.conf содержит HTTPS блок"
     fi
   fi
-  else
-    echo "⚠️  Резервная копия HTTPS конфига не найдена"
-    echo "    Убедитесь, что nginx/conf.d/app.conf содержит HTTPS блок"
+
+  # Убираем HTTP-only конфиг, чтобы nginx не загружал два server_name на порт 80
+  if [ -f "nginx/conf.d/app-http-only.conf" ]; then
+    echo ">>> Отключение HTTP-only конфига (устраняет conflicting server name)..."
+    mv nginx/conf.d/app-http-only.conf nginx/conf.d/app-http-only.conf.disabled
+    echo "✓ HTTP-only конфиг переименован в .disabled"
   fi
-  
+
   # Перезагрузить nginx
   echo ">>> Проверка конфига nginx..."
   if $COMPOSE exec -T nginx nginx -t 2>&1; then
