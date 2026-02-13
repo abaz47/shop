@@ -63,9 +63,6 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# SSL-сертификаты (certbot)
-certbot/
-
 # Flask stuff:
 instance/
 .webassets-cache
@@ -211,5 +208,15 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# SSL-сертификаты (certbot)
+certbot/
 
+# Nginx (сгенерированные конфиги из шаблонов)
+nginx/conf.d/app.conf
+nginx/conf.d/app-http-only.conf
+nginx/conf.d/app.conf.backup
+# Шаблоны остаются в репозитории
+!nginx/conf.d/templates/
+
+# Настройки
 setup.cfg

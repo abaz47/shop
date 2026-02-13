@@ -1,0 +1,69 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop}
+      POSTGRES_DB: ${POSTGRES_DB:-shop_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shop} -d ${POSTGRES_DB:-shop_db}"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  web:
+    image: abaz47/shop-web:latest
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-shop}:${POSTGRES_PASSWORD:-shop}@db:5432/${POSTGRES_DB:-shop_db}
+      DJANGO_SETTINGS_MODULE: config.settings.production
+      DEBUG: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    expose:
+      - "8000"
+    volumes:
+      - static_files:/app/staticfiles
+    restart: always
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_files:/var/www/staticfiles:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    env_file:
+      - .env
+    depends_on:
+      - web
+    restart: always
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/certbot-deploy-hook.sh:/usr/local/bin/certbot-deploy-hook.sh:ro
+      - ./docker-compose.prod.yml:/etc/letsencrypt/docker-compose.yml:ro
+    # entrypoint переопределяется при запуске через docker compose run
+    # --deploy-hook автоматически перезагружает nginx после успешного обновления сертификата
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --deploy-hook \"/usr/local/bin/certbot-deploy-hook.sh\"; sleep 12h & wait $${!}; done;'"
+    restart: always
+
+volumes:
+  postgres_data:
+  static_files:
