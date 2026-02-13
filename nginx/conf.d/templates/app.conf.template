@@ -32,10 +32,13 @@ server {
         add_header Cache-Control "public";
     }
 
-    # Медиа-файлы (на будущее)
-    # location /media/ {
-    #     alias /var/www/media/;
-    # }
+    # Медиа-файлы
+    location /media/ {
+        alias /var/www/media/;
+        access_log off;
+        expires 7d;
+        add_header Cache-Control "public";
+    }
 
     # Всё остальное → gunicorn
     location / {

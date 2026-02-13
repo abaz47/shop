@@ -18,6 +18,7 @@ SECRET_KEY = os.environ.get(
 
 INSTALLED_APPS = [
     "core",
+    "catalog",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

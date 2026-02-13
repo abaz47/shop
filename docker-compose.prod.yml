@@ -33,6 +33,7 @@ services:
       - "8000"
     volumes:
       - static_files:/app/staticfiles
+      - media_files:/app/media
     restart: always
 
   nginx:
@@ -43,6 +44,7 @@ services:
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_files:/var/www/staticfiles:ro
+      - media_files:/var/www/media:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     env_file:
@@ -67,3 +69,4 @@ services:
 volumes:
   postgres_data:
   static_files:
+  media_files:
