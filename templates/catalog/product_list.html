@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if current_category %}{{ current_category.name }} — {% endif %}Каталог — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row">
+    {% comment %} Сайдбар с категориями — только на десктопе {% endcomment %}
+    <aside class="col-lg-3 d-none d-lg-block catalog-sidebar mb-4 mb-lg-0">
+      <div class="catalog-sidebar-sticky">
+        {% include "catalog/_category_tree.html" %}
+      </div>
+    </aside>
+
+    <div class="col-12 col-lg-9">
+      {% comment %} На мобиле — кнопка открытия выдвижной панели с категориями {% endcomment %}
+      <div class="d-lg-none mb-3">
+        <button class="btn btn-outline-secondary w-100 w-sm-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#catalogCategoriesOffcanvas" aria-controls="catalogCategoriesOffcanvas" aria-label="Открыть меню категорий">
+          Категории
+        </button>
+      </div>
+
+      {% if current_category %}
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          {% for ancestor in current_category.get_ancestors %}
+            <li class="breadcrumb-item"><a href="{% url 'catalog:product_list_by_category' slug=ancestor.slug %}">{{ ancestor.name }}</a></li>
+          {% endfor %}
+          <li class="breadcrumb-item active" aria-current="page">{{ current_category.name }}</li>
+        </ol>
+      </nav>
+      {% endif %}
+
+      {% if products %}
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+        {% for product in products %}
+        <div class="col">
+          <a href="{% url 'catalog:product_detail' product.pk %}" class="text-decoration-none text-dark">
+            <div class="card h-100 catalog-card shadow-sm">
+              <div class="catalog-card-image ratio ratio-1x1 bg-light">
+                {% with main_image=product.get_main_image %}
+                {% if main_image %}
+                <img src="{{ main_image.image.url }}" alt="{{ product.name }}" class="card-img-top object-fit-cover">
+                {% else %}
+                <div class="d-flex align-items-center justify-content-center text-body-secondary">
+                  <span>Нет фото</span>
+                </div>
+                {% endif %}
+                {% endwith %}
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h2 class="card-title h6 mb-2 text-truncate" title="{{ product.name }}">{{ product.name }}</h2>
+                <div class="mt-auto">
+                  {% if product.has_discount %}
+                  <span class="text-decoration-line-through text-body-secondary small">{{ product.price|floatformat:0 }} ₽</span>
+                  <span class="text-danger fw-bold ms-1">{{ product.discounted_price|floatformat:0 }} ₽</span>
+                  <span class="badge bg-danger ms-1">−{{ product.discount_percent }}%</span>
+                  {% else %}
+                  <span class="fw-bold">{{ product.price|floatformat:0 }} ₽</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-body-secondary">В каталоге пока нет товаров.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% comment %} Выдвижная панель категорий — только на мобиле (отображается в DOM для offcanvas) {% endcomment %}
+<div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="catalogCategoriesOffcanvas" aria-labelledby="catalogCategoriesOffcanvasLabel">
+  <div class="offcanvas-header border-bottom">
+    <h2 class="offcanvas-title h5" id="catalogCategoriesOffcanvasLabel">Категории</h2>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+  </div>
+  <div class="offcanvas-body">
+    {% include "catalog/_category_tree.html" %}
+  </div>
+</div>
+{% endblock %}
