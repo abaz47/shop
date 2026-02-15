@@ -12,12 +12,12 @@
               <a href="{% url 'catalog:product_list_by_category' slug=root.slug %}" class="catalog-nav-link catalog-accordion-link flex-grow-1 {% if current_category and current_category.pk == root.pk %}active{% endif %}" onclick="event.stopPropagation()">
                 {{ root.name }}
               </a>
-              <button class="btn btn-link btn-sm p-0 ms-1 catalog-accordion-toggle flex-shrink-0" type="button" data-bs-toggle="collapse" data-bs-target="#cat-{{ root.pk }}" aria-expanded="{% if root.pk in open_accordion_ids %}true{% else %}false{% endif %}" aria-controls="cat-{{ root.pk }}" aria-label="Подкатегории {{ root.name }}">
+              <button class="btn btn-link btn-sm p-0 ms-1 catalog-accordion-toggle flex-shrink-0" type="button" data-bs-toggle="collapse" data-bs-target="#cat-{{ root.pk }}" aria-expanded="{% if open_accordion_ids and root.pk in open_accordion_ids %}true{% else %}false{% endif %}" aria-controls="cat-{{ root.pk }}" aria-label="Подкатегории {{ root.name }}">
                 <span class="accordion-toggle-icon" aria-hidden="true"></span>
               </button>
             </div>
           </h3>
-          <div id="cat-{{ root.pk }}" class="accordion-collapse collapse {% if root.pk in open_accordion_ids %}show{% endif %}" data-bs-parent="#catalogCategoryAccordion">
+          <div id="cat-{{ root.pk }}" class="accordion-collapse collapse {% if open_accordion_ids and root.pk in open_accordion_ids %}show{% endif %}" data-bs-parent="#catalogCategoryAccordion">
             <div class="accordion-body py-1">
               <ul class="nav flex-column catalog-nav-sublist">
                 {% for child in root.children.all %}
