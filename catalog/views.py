@@ -4,7 +4,7 @@ from .models import Category, Product
 
 
 def product_list(request, slug=None):
-    """Список товаров (каталог), опционально по категории и подкатегориям."""
+    """Список товаров (каталог), по категории и подкатегориям."""
     root_categories = Category.objects.filter(
         parent__isnull=True,
     ).prefetch_related("children")
@@ -40,7 +40,13 @@ def product_list(request, slug=None):
 def product_detail(request, pk):
     """Страница товара."""
     product = get_object_or_404(
-        Product.objects.filter(is_active=True).prefetch_related("images"),
+        Product.objects.filter(is_active=True)
+        .select_related("category")
+        .prefetch_related("images"),
         pk=pk,
     )
-    return render(request, "catalog/product_detail.html", {"product": product})
+    return render(
+        request,
+        "catalog/product_detail.html",
+        {"product": product}
+    )
