@@ -21,12 +21,15 @@ services:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-shop}:${POSTGRES_PASSWORD:-shop}@db:5432/${POSTGRES_DB:-shop_db}
+      DJANGO_SETTINGS_MODULE: config.settings.development
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/app
+      - media_dev:/app/media
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
 
 volumes:
   postgres_data:
+  media_dev:

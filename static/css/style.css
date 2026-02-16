@@ -55,3 +55,133 @@ footer {
   background-color: var(--yt-bg-dark);
   color: rgba(255, 255, 255, 0.75);
 }
+
+/* Каталог: сайдбар с категориями */
+.catalog-sidebar-sticky {
+  position: sticky;
+  top: 1rem;
+}
+
+.catalog-nav-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.catalog-nav-list .nav-item {
+  margin-bottom: 0.125rem;
+}
+
+.catalog-nav-link {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  color: var(--yt-gray);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.catalog-nav-link:hover {
+  background-color: rgba(154, 205, 50, 0.12);
+  color: var(--yt-dark-green);
+}
+
+.catalog-nav-link.active {
+  background-color: rgba(154, 205, 50, 0.2);
+  color: var(--yt-dark-green);
+  font-weight: 600;
+}
+
+.catalog-nav-sublist {
+  padding-left: 1rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  list-style: none;
+}
+
+.catalog-nav-sublist .nav-item {
+  margin-bottom: 0.125rem;
+}
+
+.catalog-nav-sublink {
+  font-size: 0.9375rem;
+  padding: 0.35rem 0.5rem;
+}
+
+/* Аккордеон категорий */
+.catalog-accordion .accordion-item {
+  margin-bottom: 0.125rem;
+}
+
+.catalog-accordion-header,
+.catalog-accordion-header-single {
+  margin-bottom: 0;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.catalog-accordion-header-inner {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+  width: 100%;
+}
+
+.catalog-accordion-link {
+  display: block;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: normal;
+}
+
+.catalog-accordion-toggle {
+  color: var(--yt-gray) !important;
+  text-decoration: none !important;
+  min-width: 1.75rem;
+}
+
+.catalog-accordion-toggle:hover {
+  color: var(--yt-dark-green) !important;
+}
+
+.catalog-accordion-toggle .accordion-toggle-icon {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.catalog-accordion-toggle .accordion-toggle-icon::before {
+  content: "";
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-bottom: 0.15rem;
+}
+
+.catalog-accordion-toggle[aria-expanded="true"] .accordion-toggle-icon::before {
+  transform: rotate(-135deg);
+  margin-bottom: -0.1rem;
+}
+
+.catalog-accordion-header-single .catalog-accordion-link {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.catalog-accordion .accordion-body {
+  padding-left: 1.25rem;
+  padding-right: 0.75rem;
+}
+
+/* Выдвижная панель категорий на мобиле — те же стили ссылок */
+#catalogCategoriesOffcanvas .catalog-nav-link {
+  padding: 0.6rem 0.75rem;
+}
+
+/* Каталог: карточка товара */
+.catalog-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}

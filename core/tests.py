@@ -8,22 +8,22 @@ from core.models import LegalPage
 
 
 @pytest.mark.django_db
-class TestHomeView:
-    """Тесты главной страницы."""
+class TestMainPageView:
+    """Тесты главной страницы (каталог)."""
 
-    def test_home_returns_200(self, client):
-        """Главная страница отвечает 200."""
-        response = client.get(reverse("core:home"))
+    def test_main_page_returns_200(self, client):
+        """Главная страница (каталог) отвечает 200."""
+        response = client.get(reverse("catalog:product_list"))
         assert response.status_code == 200
 
-    def test_home_uses_correct_template(self, client):
-        """Используется шаблон core/home.html."""
-        response = client.get(reverse("core:home"))
+    def test_main_page_uses_correct_template(self, client):
+        """Используется шаблон catalog/product_list.html."""
+        response = client.get(reverse("catalog:product_list"))
         assert response.templates
         template_names = [t.name for t in response.templates]
-        assert "core/home.html" in template_names
+        assert "catalog/product_list.html" in template_names
 
-    def test_home_contains_site_title(self, client):
+    def test_main_page_contains_site_title(self, client):
         """На странице есть название сайта из БД."""
         from core.models import SiteSettings
         obj, _ = SiteSettings.objects.get_or_create(
@@ -32,12 +32,12 @@ class TestHomeView:
         )
         obj.site_name = "Тестовый магазин"
         obj.save()
-        response = client.get(reverse("core:home"))
+        response = client.get(reverse("catalog:product_list"))
         assert "Тестовый магазин" in response.content.decode()
 
-    def test_home_footer_contains_legal_links(self, client):
+    def test_main_page_footer_contains_legal_links(self, client):
         """В футере есть ссылки на юридические страницы."""
-        response = client.get(reverse("core:home"))
+        response = client.get(reverse("catalog:product_list"))
         html = response.content.decode()
         assert "Пользовательское соглашение" in html
         assert "Политика конфиденциальности" in html
@@ -45,11 +45,12 @@ class TestHomeView:
         assert "Реквизиты" in html
         assert "Возврат и обмен" in html
 
-    def test_home_header_contains_page_links(self, client):
-        """В шапке есть ссылки «Оплата и доставка» и «Контакты»."""
-        response = client.get(reverse("core:home"))
+    def test_main_page_header_contains_page_links(self, client):
+        """В шапке есть ссылки «Оплата», «Доставка» и «Контакты»."""
+        response = client.get(reverse("catalog:product_list"))
         html = response.content.decode()
-        assert "Оплата и доставка" in html
+        assert "Оплата" in html
+        assert "Доставка" in html
         assert "Контакты" in html
 
 
@@ -91,13 +92,17 @@ class TestLegalPageView:
         assert "Политика конфиденциальности" in html
         assert "Страница в разработке" in html
 
-    def test_header_page_stub(self, client):
-        """Страница из шапки (Оплата и доставка) открывается заглушкой."""
-        response = client.get(reverse(
-            "core:legal_page",
-            kwargs={"slug": "payment_delivery"}
-        ))
-        assert response.status_code == 200
-        html = response.content.decode()
-        assert "Оплата и доставка" in html
-        assert "Страница в разработке" in html
+    def test_header_page_stubs(self, client):
+        """Страницы из шапки (Оплата, Доставка) открываются заглушками."""
+        for slug, expected_title in [
+            ("payment", "Оплата"),
+            ("delivery", "Доставка")
+        ]:
+            response = client.get(reverse(
+                "core:legal_page",
+                kwargs={"slug": slug}
+            ))
+            assert response.status_code == 200
+            html = response.content.decode()
+            assert expected_title in html
+            assert "Страница в разработке" in html
