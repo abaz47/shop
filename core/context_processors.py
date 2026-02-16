@@ -14,7 +14,8 @@ FOOTER_LEGAL_LINKS = [
 
 # Ссылки хэдера
 HEADER_PAGE_LINKS = [
-    ("payment_delivery", "Оплата и доставка"),
+    ("payment", "Оплата"),
+    ("delivery", "Доставка"),
     ("contacts", "Контакты"),
 ]
 

@@ -46,10 +46,11 @@ class TestMainPageView:
         assert "Возврат и обмен" in html
 
     def test_main_page_header_contains_page_links(self, client):
-        """В шапке есть ссылки «Оплата и доставка» и «Контакты»."""
+        """В шапке есть ссылки «Оплата», «Доставка» и «Контакты»."""
         response = client.get(reverse("catalog:product_list"))
         html = response.content.decode()
-        assert "Оплата и доставка" in html
+        assert "Оплата" in html
+        assert "Доставка" in html
         assert "Контакты" in html
 
 
@@ -91,13 +92,17 @@ class TestLegalPageView:
         assert "Политика конфиденциальности" in html
         assert "Страница в разработке" in html
 
-    def test_header_page_stub(self, client):
-        """Страница из шапки (Оплата и доставка) открывается заглушкой."""
-        response = client.get(reverse(
-            "core:legal_page",
-            kwargs={"slug": "payment_delivery"}
-        ))
-        assert response.status_code == 200
-        html = response.content.decode()
-        assert "Оплата и доставка" in html
-        assert "Страница в разработке" in html
+    def test_header_page_stubs(self, client):
+        """Страницы из шапки (Оплата, Доставка) открываются заглушками."""
+        for slug, expected_title in [
+            ("payment", "Оплата"),
+            ("delivery", "Доставка")
+        ]:
+            response = client.get(reverse(
+                "core:legal_page",
+                kwargs={"slug": slug}
+            ))
+            assert response.status_code == 200
+            html = response.content.decode()
+            assert expected_title in html
+            assert "Страница в разработке" in html
