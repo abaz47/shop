@@ -4,24 +4,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import LegalPage, SiteImage, SiteSettings
-
-
-@admin.register(SiteSettings)
-class SiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ("site_name", "site_description")
-    fields = ("site_name", "site_description")
-
-    def has_add_permission(self, request):
-        return not SiteSettings.objects.exists()
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.key = "main"
-        super().save_model(request, obj, form, change)
+from .models import LegalPage, SiteImage
 
 
 @admin.register(LegalPage)

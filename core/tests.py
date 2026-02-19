@@ -24,14 +24,12 @@ class TestMainPageView:
         assert "catalog/product_list.html" in template_names
 
     def test_main_page_contains_site_title(self, client):
-        """На странице есть название сайта из БД."""
-        from core.models import SiteSettings
-        obj, _ = SiteSettings.objects.get_or_create(
-            key="main",
-            defaults={"site_name": "Тестовый магазин", "site_description": ""},
-        )
-        obj.site_name = "Тестовый магазин"
-        obj.save()
+        """На странице есть название сайта из Django Sites."""
+        from django.contrib.sites.models import Site
+        from django.conf import settings
+        site = Site.objects.get(id=settings.SITE_ID)
+        site.name = "Тестовый магазин"
+        site.save()
         response = client.get(reverse("catalog:product_list"))
         assert "Тестовый магазин" in response.content.decode()
 

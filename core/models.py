@@ -1,38 +1,7 @@
 """
-Модели для настроек сайта и юридических страниц (каркас магазина).
+Модели для юридических страниц и изображений сайта.
 """
 from django.db import models
-
-
-class SiteSettings(models.Model):
-    """
-    Настройки сайта (название, описание).
-    """
-    key = models.CharField(
-        "Ключ",
-        max_length=50,
-        unique=True,
-        default="main",
-        editable=False,
-    )
-    site_name = models.CharField(
-        "Название сайта",
-        max_length=255,
-        default="Магазин",
-    )
-    site_description = models.CharField(
-        "Краткое описание",
-        max_length=255,
-        default="Интернет-магазин",
-        blank=True,
-    )
-
-    class Meta:
-        verbose_name = "настройки сайта"
-        verbose_name_plural = "настройки сайта"
-
-    def __str__(self):
-        return self.site_name
 
 
 class LegalPage(models.Model):

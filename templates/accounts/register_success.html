@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация успешна — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <h2 class="text-center mb-4">Регистрация успешна!</h2>
+      
+      <p class="mb-4">
+        Мы отправили письмо с подтверждением на указанный email адрес.
+        Пожалуйста, проверьте почту и перейдите по ссылке для активации аккаунта.
+      </p>
+      
+      <div class="text-center">
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary">Войти</a>
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">На главную</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
