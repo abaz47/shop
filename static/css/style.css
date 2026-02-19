@@ -21,22 +21,262 @@ main {
   flex: 1;
 }
 
-.navbar-brand,
+/* Хэдер сайта */
+.site-header {
+  background-color: var(--yt-bg-dark);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content {
+  min-height: 60px;
+}
+
+.header-logo {
+  text-decoration: none;
+  color: var(--yt-accent) !important;
+  font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+
+.header-logo:hover {
+  opacity: 0.9;
+}
+
+.header-logo-img {
+  height: 44px;
+  width: auto;
+  max-width: 180px;
+  display: block;
+}
+
 .site-title {
   color: var(--yt-accent) !important;
   font-weight: 700;
 }
 
-.navbar {
-  background-color: var(--yt-bg-dark) !important;
+/* Действия в хэдере (аккаунт и корзина) */
+.header-actions {
+  flex-shrink: 0;
 }
 
-.navbar .nav-link,
+/* Иконки в хэдере */
+.header-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--yt-accent);
+  transition: opacity 0.2s ease;
+  display: block;
+  flex-shrink: 0;
+}
+
+.header-icon:hover {
+  opacity: 0.85;
+}
+
+/* Корзина */
+.cart-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.cart-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.cart-badge {
+  font-size: 0.7rem;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Аккаунт */
+.account-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.account-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.account-link:hover {
+  opacity: 0.85;
+}
+
+.account-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s ease;
+}
+
+.account-link-button:hover {
+  opacity: 0.85;
+}
+
+/* Иконки аккаунта используют общий класс .header-icon */
+
+/* Бургер меню в хэдере */
+.header-navbar-toggler {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.25rem 0.5rem;
+  background-color: transparent;
+}
+
+.header-navbar-toggler .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%239acd32' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.header-navbar-toggler:hover,
+.header-navbar-toggler:focus {
+  border-color: var(--yt-accent);
+  outline: none;
+}
+
+/* Навигация под хэдером (только для десктопа) */
+.site-navbar {
+  background-color: rgba(45, 58, 45, 0.5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0;
+}
+
+.site-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.site-nav-item {
+  margin: 0;
+}
+
+.site-nav-link {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  padding: 0.5rem 0;
+  display: block;
+  position: relative;
+  transition: color 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.site-nav-link:hover {
+  color: var(--yt-accent);
+}
+
+.site-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--yt-accent);
+  transition: width 0.3s ease;
+}
+
+.site-nav-link:hover::after,
+.site-nav-link.active::after {
+  width: 100%;
+}
+
+
+.site-nav-list-mobile {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.site-nav-item-mobile {
+  margin: 0;
+}
+
+.site-nav-link-mobile {
+  color: var(--yt-gray);
+  text-decoration: none;
+  padding: 0.75rem 0;
+  display: block;
+  transition: color 0.2s ease, padding-left 0.2s ease;
+  font-size: 1rem;
+}
+
+.site-nav-link-mobile:hover {
+  color: var(--yt-dark-green);
+  padding-left: 0.5rem;
+}
+
+.site-nav-link-mobile.active {
+  color: var(--yt-dark-green);
+  font-weight: 600;
+}
+
+/* Аккордеон категорий в мобильном меню */
+#mainNavOffcanvas .mobile-main-accordion {
+  margin-bottom: 0.5rem;
+}
+
+#mainNavOffcanvas .catalog-accordion-mobile {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+#mainNavOffcanvas .catalog-accordion-item {
+  margin-bottom: 0.25rem;
+}
+
+#mainNavOffcanvas .catalog-accordion-header-inner {
+  padding: 0.5rem 0;
+}
+
+#mainNavOffcanvas .catalog-accordion-link {
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+#mainNavOffcanvas .catalog-nav-sublist {
+  padding-left: 0.75rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+#mainNavOffcanvas .catalog-nav-sublink {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.5rem;
+}
+
+/* Offcanvas для мобильного меню */
+.offcanvas {
+  background-color: #fff;
+}
+
+.offcanvas-header {
+  background-color: var(--yt-bg-dark);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.offcanvas-title {
+  color: var(--yt-accent);
+  font-weight: 700;
+}
+
 footer .footer-link {
   color: rgba(255, 255, 255, 0.75);
 }
 
-.navbar .nav-link:hover,
 footer .footer-link:hover {
   color: rgba(255, 255, 255, 0.95);
 }
@@ -54,6 +294,45 @@ footer .footer-link:hover {
 footer {
   background-color: var(--yt-bg-dark);
   color: rgba(255, 255, 255, 0.75);
+}
+
+/* Хлебные крошки */
+.breadcrumb {
+  --bs-breadcrumb-margin-bottom: 0;
+  --bs-breadcrumb-divider-color: var(--yt-gray-light);
+  padding: 0.5rem 0 1rem;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+  background-color: transparent;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: var(--yt-gray-light);
+}
+
+.breadcrumb-item a {
+  color: var(--yt-gray);
+  text-decoration: none;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.breadcrumb-item a:hover {
+  color: var(--yt-dark-green);
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 205, 50, 0.6);
+}
+
+.breadcrumb-item.active {
+  color: var(--yt-gray-light);
+  font-weight: 500;
+}
+
+@media (max-width: 575.98px) {
+  .breadcrumb {
+    font-size: 0.8rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.75rem;
+  }
 }
 
 /* Каталог: сайдбар с категориями */
@@ -184,4 +463,86 @@ footer {
 .catalog-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 991.98px) {
+  /* Компактный хэдер на мобиле */
+  .site-header {
+    padding: 0.5rem 0;
+  }
+
+  .header-content {
+    min-height: 50px;
+  }
+
+  .header-logo-img {
+    height: 36px;
+    max-width: 160px;
+  }
+
+  .site-title {
+    font-size: 1rem;
+  }
+
+  /* Скрыть текст "Личный кабинет" на мобиле, оставить только иконки */
+  .account-link {
+    font-size: 0.85rem;
+  }
+
+  /* Компактный бургер в хэдере */
+  .header-navbar-toggler {
+    padding: 0.2rem 0.4rem;
+  }
+
+  /* Компактные иконки на мобиле */
+  .header-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cart-badge {
+    font-size: 0.65rem;
+    min-width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Еще более компактный хэдер на очень маленьких экранах */
+  .header-logo {
+    flex: 1;
+  }
+
+  .site-title {
+    font-size: 0.9rem;
+  }
+
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .header-logo-img {
+    height: 30px;
+    max-width: 140px;
+  }
+
+  /* Компактные иконки на маленьких экранах */
+  .header-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Скрыть бейдж корзины, если количество равно 0 */
+.cart-badge:empty,
+.cart-badge[data-count="0"] {
+  display: none;
+}
+
+/* Улучшения для offcanvas на мобиле */
+@media (max-width: 991.98px) {
+  .offcanvas {
+    max-width: 280px;
+  }
 }

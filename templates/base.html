@@ -1,4 +1,4 @@
-{% load static %}
+{% load static site_images %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,47 +10,205 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark">
+  {# Хэдер: логотип, аккаунт и корзина #}
+  <header class="site-header">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'catalog:product_list' %}">
-        <img src="{% static 'img/logo.png' %}" alt="{{ site_name }}" height="40" class="me-2" onerror="this.style.display='none'">
-        <span class="site-title">{{ site_name }}</span>
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Меню">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'catalog:product_list' %}">Каталог</a>
-          </li>
-          {% for slug, label in header_page_links %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'core:legal_page' slug=slug %}">{{ label }}</a>
-          </li>
-          {% endfor %}
-          {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:profile' %}">Личный кабинет</a>
-          </li>
-          <li class="nav-item">
-            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
-              {% csrf_token %}
-              <button type="submit" class="nav-link border-0 bg-transparent">Выйти</button>
-            </form>
-          </li>
+      <div class="header-content d-flex align-items-center justify-content-between">
+        {# Мобильное: бургер меню #}
+        <div class="d-lg-none me-2">
+          <button class="navbar-toggler header-navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mainNavOffcanvas" aria-controls="mainNavOffcanvas" aria-label="Открыть меню">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+
+        {# Логотип #}
+        {% get_site_image 'logo-header' as header_logo %}
+        <a class="header-logo d-flex align-items-center" href="{% url 'catalog:product_list' %}">
+          {% if header_logo %}
+            <img src="{{ header_logo.get_url }}" alt="{{ site_name }}" class="header-logo-img me-2">
+            <span class="site-title visually-hidden">{{ site_name }}</span>
           {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:login' %}">Войти</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'accounts:register' %}">Регистрация</a>
-          </li>
+            <img src="{% static 'img/logo.png' %}" alt="{{ site_name }}" class="header-logo-img me-2" onerror="this.style.display='none'">
+            <span class="site-title">{{ site_name }}</span>
           {% endif %}
-        </ul>
+        </a>
+
+        {# Правая часть: аккаунт и корзина #}
+        <div class="header-actions d-flex align-items-center gap-3">
+          {# Корзина #}
+          <a href="#" class="cart-link position-relative" aria-label="Корзина">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="header-icon cart-icon" viewBox="0 0 16 16">
+              <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+            </svg>
+            {# Бейдж корзины будет добавлен позже, когда реализуем корзину #}
+            {# <span class="cart-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" data-count="0">0</span> #}
+          </a>
+
+          {# Аккаунт #}
+          <div class="account-menu">
+            {% if user.is_authenticated %}
+              <a href="{% url 'accounts:profile' %}" class="account-link" aria-label="Личный кабинет">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="header-icon" viewBox="0 0 16 16">
+                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                  <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                </svg>
+              </a>
+              <form method="post" action="{% url 'accounts:logout' %}" class="d-inline ms-2">
+                {% csrf_token %}
+                <button type="submit" class="account-link account-link-button" aria-label="Выйти">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="header-icon" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
+                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                  </svg>
+                </button>
+              </form>
+            {% else %}
+              <a href="{% url 'accounts:login' %}" class="account-link" aria-label="Войти">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="header-icon" viewBox="0 0 16 16">
+                  <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                  <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
+                </svg>
+              </a>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
+  </header>
+
+  {# Навигация под хэдером (только для десктопа) #}
+  <nav class="site-navbar navbar-expand-lg d-none d-lg-block">
+    <div class="container">
+      <ul class="site-nav-list d-flex align-items-center gap-4 mb-0">
+        <li class="site-nav-item">
+          <a class="site-nav-link{% if active_nav == 'catalog' %} active{% endif %}" href="{% url 'catalog:product_list' %}">Каталог</a>
+        </li>
+        {% for slug, label in header_page_links %}
+        <li class="site-nav-item">
+          <a class="site-nav-link{% if active_header_slug == slug %} active{% endif %}" href="{% url 'core:legal_page' slug=slug %}">{{ label }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
   </nav>
+
+  {# Offcanvas для мобильного меню #}
+  <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mainNavOffcanvas" aria-labelledby="mainNavOffcanvasLabel">
+    <div class="offcanvas-header border-bottom">
+      <h2 class="offcanvas-title h5" id="mainNavOffcanvasLabel">Меню</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+    </div>
+    <div class="offcanvas-body">
+      <ul class="site-nav-list-mobile list-unstyled mb-0">
+        {# Каталог как аккордеон с категориями (по умолчанию открыт) #}
+        {% if root_categories %}
+        <li class="site-nav-item-mobile">
+          <div class="accordion mobile-main-accordion" id="mobileMainAccordion">
+            <div class="accordion-item border-0">
+              <h3 class="accordion-header">
+                <div class="d-flex align-items-center w-100">
+                  <a href="{% url 'catalog:product_list' %}"
+                     class="site-nav-link-mobile flex-grow-1{% if active_nav == 'catalog' %} active{% endif %}"
+                     onclick="event.stopPropagation()">
+                    Каталог
+                  </a>
+                  <button class="btn btn-link btn-sm p-0 ms-1 catalog-accordion-toggle flex-shrink-0"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#mobile-catalog-cats"
+                          aria-expanded="true"
+                          aria-controls="mobile-catalog-cats"
+                          aria-label="Развернуть категории каталога">
+                    <span class="accordion-toggle-icon" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </h3>
+              <div id="mobile-catalog-cats"
+                   class="accordion-collapse collapse show"
+                   data-bs-parent="#mobileMainAccordion">
+                <div class="accordion-body pt-1 pb-0">
+                  <div class="accordion catalog-accordion-mobile" id="mobileCategoryAccordion">
+                    {% for root in root_categories %}
+                      {% if root.children.all %}
+                        <div class="accordion-item catalog-accordion-item border-0">
+                          <h3 class="accordion-header catalog-accordion-header">
+                            <div class="d-flex align-items-center w-100 catalog-accordion-header-inner">
+                              <a href="{% url 'catalog:product_list_by_category' slug=root.slug %}"
+                                 class="catalog-nav-link catalog-accordion-link flex-grow-1 {% if current_category and current_category.pk == root.pk %}active{% endif %}"
+                                 onclick="event.stopPropagation()">
+                                {{ root.name }}
+                              </a>
+                              <button class="btn btn-link btn-sm p-0 ms-1 catalog-accordion-toggle flex-shrink-0"
+                                      type="button"
+                                      data-bs-toggle="collapse"
+                                      data-bs-target="#mobile-cat-{{ root.pk }}"
+                                      aria-expanded="{% if open_accordion_ids and root.pk in open_accordion_ids %}true{% else %}false{% endif %}"
+                                      aria-controls="mobile-cat-{{ root.pk }}"
+                                      aria-label="Подкатегории {{ root.name }}">
+                                <span class="accordion-toggle-icon" aria-hidden="true"></span>
+                              </button>
+                            </div>
+                          </h3>
+                          <div id="mobile-cat-{{ root.pk }}"
+                               class="accordion-collapse collapse {% if open_accordion_ids and root.pk in open_accordion_ids %}show{% endif %}"
+                               data-bs-parent="#mobileCategoryAccordion">
+                            <div class="accordion-body py-1">
+                              <ul class="nav flex-column catalog-nav-sublist">
+                                {% for child in root.children.all %}
+                                  <li class="nav-item">
+                                    <a class="nav-link catalog-nav-link catalog-nav-sublink {% if current_category and current_category.pk == child.pk %}active{% endif %}"
+                                       href="{% url 'catalog:product_list_by_category' slug=child.slug %}">
+                                      {{ child.name }}
+                                    </a>
+                                  </li>
+                                {% endfor %}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="accordion-item catalog-accordion-item border-0">
+                          <div class="catalog-accordion-header catalog-accordion-header-single">
+                            <a href="{% url 'catalog:product_list_by_category' slug=root.slug %}"
+                               class="catalog-nav-link catalog-accordion-link {% if current_category and current_category.pk == root.pk %}active{% endif %}">
+                              {{ root.name }}
+                            </a>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </li>
+        {% else %}
+        <li class="site-nav-item-mobile">
+          <a class="site-nav-link-mobile{% if active_nav == 'catalog' %} active{% endif %}"
+             href="{% url 'catalog:product_list' %}">Каталог</a>
+        </li>
+        {% endif %}
+        {% for slug, label in header_page_links %}
+        <li class="site-nav-item-mobile">
+          <a class="site-nav-link-mobile{% if active_header_slug == slug %} active{% endif %}" href="{% url 'core:legal_page' slug=slug %}">{{ label }}</a>
+        </li>
+        {% endfor %}
+        <li class="site-nav-item-mobile border-top mt-3 pt-3">
+          {% if user.is_authenticated %}
+            <a class="site-nav-link-mobile" href="{% url 'accounts:profile' %}">Личный кабинет</a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="mt-2">
+              {% csrf_token %}
+              <button type="submit" class="site-nav-link-mobile account-link-button w-100 text-start">Выйти</button>
+            </form>
+          {% else %}
+            <a class="site-nav-link-mobile" href="{% url 'accounts:login' %}">Войти</a>
+            <a class="site-nav-link-mobile" href="{% url 'accounts:register' %}">Регистрация</a>
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </div>
 
   <main class="py-4">
     {% if messages %}
