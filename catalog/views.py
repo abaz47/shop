@@ -9,9 +9,11 @@ def product_list(request, slug=None):
         parent__isnull=True,
     ).prefetch_related("children")
     category = None
-    products = Product.objects.filter(
-        is_active=True
-    ).select_related("category").prefetch_related("images")
+    products = (
+        Product.objects.filter(is_active=True)
+        .select_related("category")
+        .prefetch_related("images")
+    )
 
     open_accordion_ids = []
     if slug:
@@ -22,7 +24,9 @@ def product_list(request, slug=None):
         category_ids = [category.pk] + category.get_descendant_ids()
         products = products.filter(category_id__in=category_ids)
         ancestors = category.get_ancestors()
-        root_pk = ancestors[0].pk if ancestors else category.pk
+        root_pk = (
+            ancestors[0].pk if ancestors else category.pk
+        )
         open_accordion_ids = [root_pk]
 
     return render(
