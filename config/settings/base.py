@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.sites", 
+    "django.contrib.sites",
     "django_recaptcha",
 ]
 
@@ -127,8 +127,6 @@ SITE_ID = 1
 RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "")
 RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "")
 RECAPTCHA_REQUIRED_SCORE = 0.85  # Порог для reCAPTCHA v3
-
-# Домен и название сайта задаются в разделе админки «Sites» (SITE_ID = 1 по умолчанию)
 
 # Настройки аутентификации
 LOGIN_URL = "/accounts/login/"
