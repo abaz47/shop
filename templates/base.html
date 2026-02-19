@@ -29,6 +29,24 @@
             <a class="nav-link" href="{% url 'core:legal_page' slug=slug %}">{{ label }}</a>
           </li>
           {% endfor %}
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:profile' %}">Личный кабинет</a>
+          </li>
+          <li class="nav-item">
+            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="nav-link border-0 bg-transparent">Выйти</button>
+            </form>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:login' %}">Войти</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'accounts:register' %}">Регистрация</a>
+          </li>
+          {% endif %}
         </ul>
       </div>
     </div>

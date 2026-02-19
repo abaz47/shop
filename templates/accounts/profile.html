@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+      <h3 class="mb-4">Личный кабинет</h3>
+      
+          <div class="mb-3">
+            <strong>Имя пользователя:</strong> {{ profile.user.username }}
+          </div>
+          <div class="mb-3">
+            <strong>Email:</strong> {{ profile.user.email }}
+          </div>
+          {% if profile.user.first_name or profile.user.last_name %}
+            <div class="mb-3">
+              <strong>Имя:</strong> {{ profile.user.first_name }} {{ profile.user.last_name }}
+            </div>
+          {% endif %}
+          {% if profile.phone %}
+            <div class="mb-3">
+              <strong>Телефон:</strong> {{ profile.phone }}
+            </div>
+          {% endif %}
+          {% if profile.birth_date %}
+            <div class="mb-3">
+              <strong>Дата рождения:</strong> {{ profile.birth_date|date:"d.m.Y" }}
+            </div>
+          {% endif %}
+          {% if profile.address %}
+            <div class="mb-3">
+              <strong>Адрес доставки:</strong><br>
+              {{ profile.address|linebreaks }}
+            </div>
+          {% endif %}
+          
+          <div class="mt-4">
+            <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+              Редактировать профиль
+            </a>
+            <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-secondary">Выйти</button>
+            </form>
+          </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
