@@ -56,6 +56,16 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
+        "django.core.mail": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts.utils": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 

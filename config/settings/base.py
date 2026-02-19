@@ -17,14 +17,17 @@ SECRET_KEY = os.environ.get(
 )
 
 INSTALLED_APPS = [
-    "core",
+    "accounts",
     "catalog",
+    "core",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites", 
+    "django_recaptcha",
 ]
 
 MIDDLEWARE = [
@@ -116,3 +119,18 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ID сайта для django.contrib.sites (по умолчанию 1)
+SITE_ID = 1
+
+# Настройки reCAPTCHA
+RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "")
+RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "")
+RECAPTCHA_REQUIRED_SCORE = 0.85  # Порог для reCAPTCHA v3
+
+# Домен и название сайта задаются в разделе админки «Sites» (SITE_ID = 1 по умолчанию)
+
+# Настройки аутентификации
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/accounts/profile/"
+LOGOUT_REDIRECT_URL = "/"
