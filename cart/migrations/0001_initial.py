@@ -45,6 +45,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="cart",
             constraint=models.UniqueConstraint(
+                fields=("session_key",),
                 condition=models.Q(session_key__isnull=False) & ~models.Q(session_key=""),
                 name="cart_unique_session_key",
             ),

@@ -1,7 +1,7 @@
 """
 Утилиты корзины: получение/создание корзины, перенос при входе.
 """
-from .models import Cart
+from .models import Cart, CartItem
 
 
 def get_or_create_cart(request):

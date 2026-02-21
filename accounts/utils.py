@@ -53,11 +53,11 @@ def send_email_async(
                 from_email=from_email or settings.DEFAULT_FROM_EMAIL,
                 to=recipient_list,
             )
-
+            
             # Добавляем HTML версию, если она есть
             if html_message:
                 email.attach_alternative(html_message, "text/html")
-
+            
             email.send(fail_silently=False)
             logger.info(f"Email отправлен: {subject} -> {recipient_list}")
         except Exception as e:

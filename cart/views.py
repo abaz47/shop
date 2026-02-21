@@ -30,10 +30,7 @@ def cart_detail(request):
 @require_POST
 def cart_add(request, product_id):
     """Добавить товар в корзину (POST)."""
-    product = get_object_or_404(
-        Product.objects.filter(is_active=True),
-        pk=product_id
-    )
+    product = get_object_or_404(Product.objects.filter(is_active=True), pk=product_id)
     cart = get_or_create_cart(request)
     quantity = int(request.POST.get("quantity", 1))
     if quantity < 1:
@@ -49,11 +46,7 @@ def cart_add(request, product_id):
         item.save(update_fields=["quantity"])
 
     messages.success(request, f"Товар «{product.name}» добавлен в корзину.")
-    redirect_url = request.POST.get(
-        "next"
-    ) or request.GET.get(
-        "next"
-    ) or reverse(
+    redirect_url = request.POST.get("next") or request.GET.get("next") or reverse(
         "catalog:product_detail", kwargs={"pk": product.pk}
     )
     return redirect(redirect_url)
