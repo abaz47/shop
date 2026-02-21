@@ -1,7 +1,6 @@
 """
 Представления корзины.
 """
-from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -30,7 +29,9 @@ def cart_detail(request):
 @require_POST
 def cart_add(request, product_id):
     """Добавить товар в корзину (POST)."""
-    product = get_object_or_404(Product.objects.filter(is_active=True), pk=product_id)
+    product = get_object_or_404(
+        Product.objects.filter(is_active=True), pk=product_id
+    )
     cart = get_or_create_cart(request)
     quantity = int(request.POST.get("quantity", 1))
     if quantity < 1:
@@ -45,8 +46,11 @@ def cart_add(request, product_id):
         item.quantity += quantity
         item.save(update_fields=["quantity"])
 
-    messages.success(request, f"Товар «{product.name}» добавлен в корзину.")
-    redirect_url = request.POST.get("next") or request.GET.get("next") or reverse(
+    redirect_url = request.POST.get(
+        "next"
+    ) or request.GET.get(
+        "next"
+    ) or reverse(
         "catalog:product_detail", kwargs={"pk": product.pk}
     )
     return redirect(redirect_url)
@@ -62,11 +66,9 @@ def cart_update(request, product_id):
     quantity = int(request.POST.get("quantity", 1))
     if quantity < 1:
         item.delete()
-        messages.success(request, "Позиция удалена из корзины.")
     else:
         item.quantity = quantity
         item.save(update_fields=["quantity"])
-        messages.success(request, "Количество обновлено.")
     return redirect("cart:detail")
 
 
@@ -78,5 +80,4 @@ def cart_remove(request, product_id):
         CartItem.objects.filter(cart=cart, product_id=product_id)
     )
     item.delete()
-    messages.success(request, "Позиция удалена из корзины.")
     return redirect("cart:detail")

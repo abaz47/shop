@@ -48,17 +48,16 @@
             {% endif %}
           </td>
           <td>
-            <form action="{% url 'cart:update' item.product.pk %}" method="post" class="d-flex align-items-center justify-content-center gap-1">
+            <form action="{% url 'cart:update' item.product.pk %}" method="post" class="cart-quantity-form">
               {% csrf_token %}
-              <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm" style="width: 70px;">
-              <button type="submit" class="btn btn-sm btn-outline-secondary">OK</button>
+              <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm d-inline-block" style="width: 70px;" aria-label="Количество">
             </form>
           </td>
           <td class="text-end fw-bold">{{ item.line_total|floatformat:0 }} ₽</td>
           <td>
-            <form action="{% url 'cart:remove' item.product.pk %}" method="post" onsubmit="return confirm('Удалить позицию из корзины?');">
+            <form action="{% url 'cart:remove' item.product.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.product.name }}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Удалить">✕</button>
+              <button type="button" class="btn btn-sm btn-outline-danger cart-remove-btn" aria-label="Удалить">✕</button>
             </form>
           </td>
         </tr>
@@ -76,4 +75,65 @@
   <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Перейти в каталог</a>
   {% endif %}
 </div>
+
+{# Модальное окно подтверждения удаления из корзины #}
+{% if items %}
+<div class="modal fade" id="cartRemoveModal" tabindex="-1" aria-labelledby="cartRemoveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5" id="cartRemoveModalLabel">Удалить из корзины?</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0" id="cartRemoveModalBody">Удалить позицию из корзины?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-danger" id="cartRemoveModalConfirm">Удалить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var quantityForms = document.querySelectorAll('.cart-quantity-form');
+    quantityForms.forEach(function(form) {
+      var input = form.querySelector('input[name="quantity"]');
+      if (input) input.addEventListener('change', function() { form.submit(); });
+    });
+
+    var removeModalEl = document.getElementById('cartRemoveModal');
+    var removeModalBody = document.getElementById('cartRemoveModalBody');
+    var confirmBtn = document.getElementById('cartRemoveModalConfirm');
+    var formToRemove = null;
+
+    document.querySelectorAll('.cart-remove-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var form = this.closest('form');
+        var productName = form && form.getAttribute('data-product-name');
+        formToRemove = form;
+        if (removeModalBody) {
+          removeModalBody.textContent = productName
+            ? 'Удалить «' + productName + '» из корзины?'
+            : 'Удалить позицию из корзины?';
+        }
+        if (removeModalEl && window.bootstrap) {
+          var modal = new bootstrap.Modal(removeModalEl);
+          modal.show();
+        }
+      });
+    });
+
+    if (confirmBtn && removeModalEl) {
+      confirmBtn.addEventListener('click', function() {
+        if (formToRemove) formToRemove.submit();
+        var modal = bootstrap.Modal.getInstance(removeModalEl);
+        if (modal) modal.hide();
+      });
+    }
+  })();
+</script>
+{% endif %}
 {% endblock %}
