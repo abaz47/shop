@@ -18,6 +18,7 @@ SECRET_KEY = os.environ.get(
 
 INSTALLED_APPS = [
     "accounts",
+    "cart",
     "catalog",
     "core",
     "django.contrib.admin",
@@ -53,6 +54,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.site",
+                "cart.context_processors.cart",
             ],
         },
     },

@@ -106,6 +106,7 @@ class CustomLoginView(LoginView):
     def form_valid(self, form):
         """
         Проверяет, что аккаунт активирован перед входом.
+        После входа переносит корзину из сессии в корзину пользователя.
         """
         user = form.get_user()
         if not user.is_active:
@@ -115,7 +116,24 @@ class CustomLoginView(LoginView):
                 "Проверьте почту для подтверждения.",
             )
             return redirect("accounts:login")
-        return super().form_valid(form)
+
+        session_key_before = self.request.session.session_key
+        response = super().form_valid(form)
+
+        # Перенос корзины анонима в корзину пользователя
+        if session_key_before:
+            from cart.models import Cart
+            from cart.utils import get_or_create_cart, merge_carts
+
+            session_cart = Cart.objects.filter(
+                session_key=session_key_before,
+                user__isnull=True,
+            ).first()
+            if session_cart:
+                user_cart = get_or_create_cart(self.request)
+                merge_carts(session_cart, user_cart)
+
+        return response
 
 
 class CustomLogoutView(LogoutView):
