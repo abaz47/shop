@@ -9,6 +9,7 @@ from django.contrib.auth.views import (
     LogoutView,
     PasswordResetView as DjangoPasswordResetView,
 )
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
@@ -302,7 +303,7 @@ class PasswordResetView(DjangoPasswordResetView):
             )
             message = render_to_string(text_template, context)
 
-            # Отправляем письмо асинхронно с HTML-версией
+            # Отправляем письмо асинхронно
             send_email_async(
                 subject=subject,
                 message=message,
@@ -311,4 +312,4 @@ class PasswordResetView(DjangoPasswordResetView):
                 html_message=html_message,
             )
 
-        return super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
