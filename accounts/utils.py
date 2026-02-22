@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import local
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
 
@@ -38,7 +38,7 @@ def send_email_async(
 
     Args:
         subject: Тема письма
-        message: Текст письма
+        message: Текст письма (обязательно)
         from_email: Отправитель (None = DEFAULT_FROM_EMAIL)
         recipient_list: Список получателей
         html_message: HTML версия письма (опционально)
@@ -47,14 +47,18 @@ def send_email_async(
 
     def _send():
         try:
-            send_mail(
+            email = EmailMultiAlternatives(
                 subject=subject,
-                message=message,
-                from_email=from_email,
-                recipient_list=recipient_list,
-                html_message=html_message,
-                fail_silently=False,
+                body=message,
+                from_email=from_email or settings.DEFAULT_FROM_EMAIL,
+                to=recipient_list,
             )
+
+            # Добавляем HTML версию, если она есть
+            if html_message:
+                email.attach_alternative(html_message, "text/html")
+
+            email.send(fail_silently=False)
             logger.info(f"Email отправлен: {subject} -> {recipient_list}")
         except Exception as e:
             logger.error(f"Ошибка отправки email: {e}", exc_info=True)

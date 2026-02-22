@@ -14,13 +14,6 @@
     </aside>
 
     <div class="col-12 col-lg-9">
-      {% comment %} На мобиле — кнопка открытия выдвижной панели с категориями {% endcomment %}
-      <div class="d-lg-none mb-3">
-        <button class="btn btn-outline-secondary w-100 w-sm-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#catalogCategoriesOffcanvas" aria-controls="catalogCategoriesOffcanvas" aria-label="Открыть меню категорий">
-          Категории
-        </button>
-      </div>
-
       {% if current_category %}
       <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
@@ -70,17 +63,6 @@
       <p class="text-body-secondary">В каталоге пока нет товаров.</p>
       {% endif %}
     </div>
-  </div>
-</div>
-
-{% comment %} Выдвижная панель категорий — только на мобиле (отображается в DOM для offcanvas) {% endcomment %}
-<div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="catalogCategoriesOffcanvas" aria-labelledby="catalogCategoriesOffcanvasLabel">
-  <div class="offcanvas-header border-bottom">
-    <h2 class="offcanvas-title h5" id="catalogCategoriesOffcanvasLabel">Категории</h2>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
-  </div>
-  <div class="offcanvas-body">
-    {% include "catalog/_category_tree.html" %}
   </div>
 </div>
 {% endblock %}

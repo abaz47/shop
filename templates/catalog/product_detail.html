@@ -73,6 +73,13 @@
       {% else %}
       <p class="text-body-secondary">Описание отсутствует.</p>
       {% endif %}
+
+      <form action="{% url 'cart:add' product.pk %}" method="post" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="quantity" value="1">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="btn btn-primary">В корзину</button>
+      </form>
     </div>
   </div>
 </div>
