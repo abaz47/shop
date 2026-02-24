@@ -13,3 +13,6 @@ pytest-cov>=6.0
 
 # reCAPTCHA для защиты форм
 django-recaptcha>=4.0
+
+# СДЭК API
+requests>=2.28
