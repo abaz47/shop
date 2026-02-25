@@ -40,6 +40,7 @@
             <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
               Редактировать профиль
             </a>
+            <a href="{% url 'orders:list' %}" class="btn btn-outline-primary">Мои заказы</a>
             <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
               {% csrf_token %}
               <button type="submit" class="btn btn-outline-secondary">Выйти</button>

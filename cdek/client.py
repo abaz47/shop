@@ -144,6 +144,7 @@ class CdekClient:
                     timeout=self.timeout
                 )
             else:
+                logger.debug("CDEK → %s %s body=%s", method, path, json)
                 resp = requests.post(
                     url,
                     headers=headers,
@@ -154,16 +155,20 @@ class CdekClient:
             return resp.json() if resp.content else {}
         except requests.RequestException as e:
             status_code = getattr(e.response, "status_code", None)
+            raw_text = getattr(e.response, "text", "") or ""
             try:
                 response_body = e.response.json() if e.response else {}
             except Exception:
                 response_body = {}
             logger.warning(
-                "CDEK API %s %s failed: %s, body=%s",
+                "CDEK API %s %s failed: "
+                "status=%s err=%s raw_response=%r request_body=%s",
                 method,
                 path,
+                status_code,
                 e,
-                response_body,
+                raw_text[:500],
+                json,
             )
             raise CdekAPIError(
                 f"Ошибка СДЭК API: {e}",
@@ -239,6 +244,84 @@ class CdekClient:
         }
         logger.debug("CDEK tarifflist request: %s", body)
         return self._request("POST", "/v2/calculator/tarifflist", json=body)
+
+    def create_order(
+        self,
+        *,
+        number: str,
+        tariff_code: int,
+        shipment_point: str,
+        recipient_name: str,
+        recipient_phone: str,
+        packages: list[dict],
+        delivery_point: str | None = None,
+        to_city_code: int | None = None,
+        to_address: str | None = None,
+        sender_name: str = "",
+        sender_phone: str = "",
+        sender_company: str = "",
+        comment: str = "",
+    ) -> dict[str, Any]:
+        """
+        Регистрация заказа в СДЭК (POST /v2/orders).
+
+        :param number: Номер заказа в нашей системе.
+        :param tariff_code: Код тарифа (136, 137 и т.д.).
+        :param shipment_point: Код ПВЗ отправки (напр. "KLP8").
+        :param recipient_name: ФИО получателя.
+        :param recipient_phone: Телефон получателя (+7...).
+        :param packages: Список грузовых мест с товарами (см, г, items).
+        :param delivery_point: Код ПВЗ получателя
+            (для склад-склад / склад-постамат).
+        :param to_city_code: Код города получателя (для курьерской доставки).
+        :param to_address: Адрес курьерской доставки.
+        :param sender_name: Имя / ФИО отправителя.
+        :param sender_phone: Телефон отправителя.
+        :param sender_company: Название компании отправителя.
+        :param comment: Комментарий к заказу.
+        :return: Ответ API:
+            entity.uuid — UUID заказа в СДЭК, requests[].state — статус.
+        """
+        body: dict[str, Any] = {
+            "type": 1,
+            "tariff_code": tariff_code,
+            "number": number,
+            "shipment_point": shipment_point,
+        }
+
+        if delivery_point:
+            body["delivery_point"] = delivery_point
+        elif to_city_code and to_address:
+            body["to_location"] = {"code": to_city_code, "address": to_address}
+
+        body["recipient"] = {
+            "name": recipient_name,
+            "phones": [{"number": recipient_phone}],
+        }
+
+        if sender_name or sender_phone or sender_company:
+            sender: dict[str, Any] = {}
+            if sender_name:
+                sender["name"] = sender_name
+            if sender_company:
+                sender["company"] = sender_company
+            if sender_phone:
+                sender["phones"] = [{"number": sender_phone}]
+            body["sender"] = sender
+
+        if comment:
+            body["comment"] = comment
+
+        body["packages"] = packages
+        logger.info(
+            "CDEK create_order: "
+            "number=%s tariff=%s shipment=%s delivery_point=%s",
+            number,
+            tariff_code,
+            shipment_point,
+            delivery_point or to_address
+        )
+        return self._request("POST", "/v2/orders", json=body)
 
     def get_cities(
         self,

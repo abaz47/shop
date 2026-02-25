@@ -148,4 +148,10 @@ CDEK_FROM_CITY_CODE = int(
 )
 CDEK_FROM_CITY_NAME = os.environ.get("CDEK_FROM_CITY_NAME", "Санкт-Петербург")
 CDEK_FROM_ADDRESS = os.environ.get("CDEK_FROM_ADDRESS", "")
+# Код ПВЗ, из которого отправляются посылки
+CDEK_FROM_PVZ_CODE = os.environ.get("CDEK_FROM_PVZ_CODE", "")
+# Данные отправителя для заказов в СДЭК (имя/компания/телефон)
+CDEK_SENDER_NAME = os.environ.get("CDEK_SENDER_NAME", "")
+CDEK_SENDER_PHONE = os.environ.get("CDEK_SENDER_PHONE", "")
+CDEK_SENDER_COMPANY = os.environ.get("CDEK_SENDER_COMPANY", "")
 YANDEX_MAPS_API_KEY = os.environ.get("YANDEX_MAPS_API_KEY", "")

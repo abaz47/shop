@@ -16,8 +16,13 @@ logger = logging.getLogger(__name__)
 CITIES_CACHE_KEY = "cdek_cities_ru"
 CITIES_CACHE_TIMEOUT = 86400  # 24 часа
 
-# СДЭК считает «вес к оплате» = наибольший из весов:
-# физический или объёмный = (Д×Ш×В см)/5000.
+# Дефолтные габариты и вес, если у товара не заданы (мм и г).
+# СДЭК считает «вес к оплате» как максимальный
+# из физического и объёмного = (Д×Ш×В см)/5000.
+DEFAULT_WEIGHT_G = 500
+DEFAULT_LENGTH_MM = 100
+DEFAULT_WIDTH_MM = 100
+DEFAULT_HEIGHT_MM = 100
 
 
 def get_client() -> CdekClient | None:
@@ -44,12 +49,13 @@ def cart_items_to_packages(cart_items) -> list[dict[str, int]]:
     """
     packages = []
     for item in cart_items:
+        product = item.product
         for _ in range(item.quantity):
             packages.append({
-                "weight": item.product.weight_g,
-                "length": item.product.length_mm,
-                "width": item.product.width_mm,
-                "height": item.product.height_mm,
+                "weight": product.weight_g or DEFAULT_WEIGHT_G,
+                "length": product.length_mm or DEFAULT_LENGTH_MM,
+                "width": product.width_mm or DEFAULT_WIDTH_MM,
+                "height": product.height_mm or DEFAULT_HEIGHT_MM,
             })
     return packages
 
