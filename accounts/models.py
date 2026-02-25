@@ -21,6 +21,11 @@ class UserProfile(models.Model):
         related_name="profile",
         verbose_name="Пользователь",
     )
+    patronymic = models.CharField(
+        "Отчество",
+        max_length=150,
+        blank=True,
+    )
     phone = models.CharField(
         "Телефон",
         max_length=20,

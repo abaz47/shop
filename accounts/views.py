@@ -148,9 +148,15 @@ class CustomLogoutView(LogoutView):
 
 @login_required
 def profile_view(request):
-    """Отображение профиля пользователя."""
+    """Личный кабинет: данные профиля и список заказов."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    return render(request, "accounts/profile.html", {"profile": profile})
+    from orders.models import Order
+    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+    return render(
+        request,
+        "accounts/profile.html",
+        {"profile": profile, "orders": orders},
+    )
 
 
 class ProfileEditView(UpdateView):

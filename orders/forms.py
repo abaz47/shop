@@ -90,30 +90,39 @@ class CheckoutForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        if self.user:
-            profile = getattr(self.user, "profile", None)
-            if profile and not self.initial:
+        if self.user and not self.initial:
+            from accounts.models import UserProfile
+
+            try:
+                profile = self.user.profile
+            except UserProfile.DoesNotExist:
+                profile = None
+            if profile is None and self.user.pk:
+                profile, _ = UserProfile.objects.get_or_create(
+                    user=self.user, defaults={}
+                )
+            if profile:
+                fio_parts = [
+                    self.user.last_name,
+                    self.user.first_name,
+                    getattr(profile, "patronymic", "") or "",
+                ]
                 self.initial.setdefault(
                     "recipient_name",
-                    " ".join(
-                        filter(
-                            None,
-                            [self.user.last_name, self.user.first_name],
-                        )
-                    ).strip()
+                    " ".join(filter(None, fio_parts)).strip()
                     or self.user.get_full_name(),
                 )
                 self.initial.setdefault(
                     "recipient_phone",
-                    profile.phone or ""
+                    profile.phone or "",
                 )
                 self.initial.setdefault(
                     "recipient_email",
-                    self.user.email or ""
+                    self.user.email or "",
                 )
                 self.initial.setdefault(
                     "delivery_address",
-                    profile.address or ""
+                    profile.address or "",
                 )
 
     def clean(self):
