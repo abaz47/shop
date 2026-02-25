@@ -196,24 +196,13 @@ def _process_place_order(request, form, cart, items, products_total):
     return redirect("orders:success", order_id=order.pk)
 
 
-@login_required
-@require_http_methods(["GET", "POST"])
-def checkout_view(request):
-    """Страница оформления заказа: форма, расчёт доставки, создание заказа."""
-    cart = get_or_create_cart(request)
-    items = list(
-        cart.items.select_related("product").prefetch_related(
-            "product__images"
-        )
-    )
-    if not items:
-        messages.info(
-            request,
-            "Корзина пуста. Добавьте товары для оформления заказа.",
-        )
-        return redirect("cart:detail")
-
-    products_total = cart.total_price
+def _get_checkout_context(request, cart, items, products_total):
+    """
+    Обрабатывает форму оформления заказа (GET/POST).
+    Возвращает (redirect_response, context_dict).
+    Если redirect_response не None — редирект после успешного place_order.
+    Иначе context_dict содержит form, delivery_cost, total, cdek_service_url...
+    """
     delivery_cost = None
     delivery_period_min = None
     delivery_period_max = None
@@ -252,7 +241,7 @@ def checkout_view(request):
                     request, form, cart, items, products_total
                 )
                 if redirect_response is not None:
-                    return redirect_response
+                    return redirect_response, None
         else:
             if action == "place_order":
                 messages.error(
@@ -264,23 +253,35 @@ def checkout_view(request):
     total = products_total + (delivery_cost or Decimal("0"))
     cdek_service_url = request.build_absolute_uri("/service.php")
     yandex_key = getattr(settings, "YANDEX_MAPS_API_KEY", "") or ""
+    context = {
+        "form": form,
+        "products_total": products_total,
+        "delivery_cost": delivery_cost,
+        "delivery_period_min": delivery_period_min,
+        "delivery_period_max": delivery_period_max,
+        "total": total,
+        "cdek_service_url": cdek_service_url,
+        "yandex_maps_api_key": yandex_key,
+    }
+    return None, context
 
-    return render(
-        request,
-        "orders/checkout.html",
-        {
-            "form": form,
-            "cart": cart,
-            "items": items,
-            "products_total": products_total,
-            "delivery_cost": delivery_cost,
-            "delivery_period_min": delivery_period_min,
-            "delivery_period_max": delivery_period_max,
-            "total": total,
-            "cdek_service_url": cdek_service_url,
-            "yandex_maps_api_key": yandex_key,
-        },
-    )
+
+@require_http_methods(["GET", "POST"])
+def checkout_view(request):
+    """
+    Редирект на единую страницу корзины/оформления.
+    Оставлен для обратной совместимости ссылок.
+    """
+    if not request.user.is_authenticated:
+        return redirect("cart:detail")
+    cart = get_or_create_cart(request)
+    if not cart.items.exists():
+        messages.info(
+            request,
+            "Корзина пуста. Добавьте товары для оформления заказа.",
+        )
+        return redirect("cart:detail")
+    return redirect("cart:detail")
 
 
 @login_required

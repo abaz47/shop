@@ -4,70 +4,259 @@
 {% block title %}Корзина — {{ site_name }}{% endblock %}
 
 {% block content %}
+{% if checkout_context and checkout_context.yandex_maps_api_key %}
+<script src="https://api-maps.yandex.ru/v3/?lang=ru_RU&apikey={{ checkout_context.yandex_maps_api_key|urlencode }}" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/@cdek-it/widget@3.11.1/dist/cdek-widget.umd.js" type="text/javascript"></script>
+{% endif %}
 <div class="container py-4">
   <h2 class="mb-4">Корзина</h2>
 
   {% if items %}
-  <div class="table-responsive cart-table-wrap">
-    <table class="table table-hover align-middle cart-table">
-      <thead class="table-light cart-table-head">
-        <tr>
-          <th class="cart-th-photo">Фото</th>
-          <th class="cart-th-product">Товар</th>
-          <th class="cart-th-qty text-start">Количество</th>
-          <th class="cart-th-total text-end">Сумма</th>
-          <th class="cart-th-remove"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in items %}
-        <tr class="cart-item-row">
-          <td class="cart-cell-photo" data-label="">
-            <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none">
-              {% with main_image=item.product.get_main_image %}
-              {% if main_image %}
-              <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
-              {% else %}
-              <div class="bg-light rounded d-flex align-items-center justify-content-center text-body-secondary cart-item-img-placeholder" style="width: 60px; height: 60px;">
-                <span class="small">Нет фото</span>
-              </div>
-              {% endif %}
-              {% endwith %}
-            </a>
-          </td>
-          <td class="cart-cell-product" data-label="Товар">
-            <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-dark text-decoration-none fw-medium">{{ item.product.name }}</a>
-          </td>
-          <td class="cart-cell-qty text-start" data-label="Количество">
-            <form action="{% url 'cart:update' item.product.pk %}" method="post" class="cart-quantity-form">
-              {% csrf_token %}
-              <input type="hidden" name="quantity" value="{{ item.quantity }}">
-              <div class="cart-qty-controls">
-                <button type="button" class="cart-qty-btn cart-qty-minus" aria-label="Уменьшить">−</button>
-                <span class="cart-qty-value" aria-live="polite">{{ item.quantity }}</span>
-                <button type="button" class="cart-qty-btn cart-qty-plus" aria-label="Увеличить">+</button>
-              </div>
-            </form>
-          </td>
-          <td class="cart-cell-total text-end fw-bold" data-label="Сумма">{{ item.line_total|floatformat:0 }} ₽</td>
-          <td class="cart-cell-remove" data-label="">
-            <form action="{% url 'cart:remove' item.product.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.product.name }}">
-              {% csrf_token %}
-              <button type="button" class="btn btn-sm btn-outline-danger cart-remove-btn" aria-label="Удалить">✕</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <div class="row">
+    <div class="col-lg-{% if checkout_context %}7{% else %}12{% endif %}">
+      <div class="table-responsive cart-table-wrap">
+        <table class="table table-hover align-middle cart-table">
+          <thead class="table-light cart-table-head">
+            <tr>
+              <th class="cart-th-photo">Фото</th>
+              <th class="cart-th-product">Товар</th>
+              <th class="cart-th-qty text-start">Количество</th>
+              <th class="cart-th-total text-end">Сумма</th>
+              <th class="cart-th-remove"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr class="cart-item-row">
+              <td class="cart-cell-photo" data-label="">
+                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none">
+                  {% with main_image=item.product.get_main_image %}
+                  {% if main_image %}
+                  <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
+                  {% else %}
+                  <div class="bg-light rounded d-flex align-items-center justify-content-center text-body-secondary cart-item-img-placeholder" style="width: 60px; height: 60px;">
+                    <span class="small">Нет фото</span>
+                  </div>
+                  {% endif %}
+                  {% endwith %}
+                </a>
+              </td>
+              <td class="cart-cell-product" data-label="Товар">
+                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-dark text-decoration-none fw-medium">{{ item.product.name }}</a>
+              </td>
+              <td class="cart-cell-qty text-start" data-label="Количество">
+                <form action="{% url 'cart:update' item.product.pk %}" method="post" class="cart-quantity-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="quantity" value="{{ item.quantity }}">
+                  <div class="cart-qty-controls">
+                    <button type="button" class="cart-qty-btn cart-qty-minus" aria-label="Уменьшить">−</button>
+                    <span class="cart-qty-value" aria-live="polite">{{ item.quantity }}</span>
+                    <button type="button" class="cart-qty-btn cart-qty-plus" aria-label="Увеличить">+</button>
+                  </div>
+                </form>
+              </td>
+              <td class="cart-cell-total text-end fw-bold" data-label="Сумма">{{ item.line_total|floatformat:0 }} ₽</td>
+              <td class="cart-cell-remove" data-label="">
+                <form action="{% url 'cart:remove' item.product.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.product.name }}">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-sm btn-outline-danger cart-remove-btn" aria-label="Удалить">✕</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">Продолжить покупки</a>
-      <a href="{% url 'orders:checkout' %}" class="btn btn-primary">Оформить заказ</a>
+      {% if checkout_context %}
+      <div class="mt-3">
+        <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary btn-sm">Продолжить покупки</a>
+      </div>
+      {# Блок оформления заказа для авторизованных #}
+      <form method="post" id="checkout-form" novalidate class="mt-4">
+        {% csrf_token %}
+        {% if checkout_context.form.non_field_errors %}
+          <div class="alert alert-danger">{{ checkout_context.form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="h6 mb-0">Получатель</h3>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="id_recipient_name" class="form-label">{{ checkout_context.form.recipient_name.label }}</label>
+              {{ checkout_context.form.recipient_name }}
+              {% if checkout_context.form.recipient_name.errors %}
+                <div class="text-danger small">{{ checkout_context.form.recipient_name.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="id_recipient_phone" class="form-label">{{ checkout_context.form.recipient_phone.label }}</label>
+              {{ checkout_context.form.recipient_phone }}
+              {% if checkout_context.form.recipient_phone.errors %}
+                <div class="text-danger small">{{ checkout_context.form.recipient_phone.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="id_recipient_email" class="form-label">{{ checkout_context.form.recipient_email.label }}</label>
+              {{ checkout_context.form.recipient_email }}
+              {% if checkout_context.form.recipient_email.errors %}
+                <div class="text-danger small">{{ checkout_context.form.recipient_email.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header">
+            <h3 class="h6 mb-0">Доставка СДЭК</h3>
+          </div>
+          <div class="card-body">
+            <p class="text-body-secondary small mb-3">
+              Отправка товаров из Санкт-Петербурга (ПВЗ).
+              Выберите пункт выдачи или адрес на карте, нажмите в карточке кнопку <strong>«Выбрать»</strong>,
+              затем укажите вариант доставки в блоке «Варианты доставки» ниже.
+            </p>
+
+            <div class="d-none">
+              {{ checkout_context.form.delivery_tariff }}
+              {{ checkout_context.form.delivery_mode }}
+              {{ checkout_context.form.city_code }}
+              {{ checkout_context.form.pvz_code }}
+              {{ checkout_context.form.delivery_address }}
+            </div>
+
+            {% if not checkout_context.yandex_maps_api_key %}
+            <p class="alert alert-warning small mb-3">
+              Карта ПВЗ недоступна: не задан ключ Яндекс.Карт (YANDEX_MAPS_API_KEY).
+            </p>
+            {% endif %}
+
+            <div id="cdek-widget-container" style="width: 100%; height: 500px;"></div>
+
+            <div id="cdek-pvz-selected" class="alert alert-light border small mt-2 mb-0 d-none" role="status">
+              <strong>Выбрано:</strong> <span id="cdek-pvz-address"></span>
+            </div>
+
+            <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">
+              Рассчитываем доступные тарифы доставки…
+            </div>
+            <div id="cdek-tariffs-panel" class="mt-2 d-none">
+              <h4 class="h6 mb-2">Варианты доставки</h4>
+              <div id="cdek-tariffs-list" class="d-grid gap-2"></div>
+            </div>
+            <div id="cdek-tariffs-error" class="alert alert-danger small mt-2 d-none"></div>
+
+            {% if checkout_context.form.pvz_code.errors %}
+              <div class="text-danger small mt-1">{{ checkout_context.form.pvz_code.errors }}</div>
+            {% endif %}
+            {% if checkout_context.form.city_code.errors %}
+              <div class="text-danger small mt-1">{{ checkout_context.form.city_code.errors }}</div>
+            {% endif %}
+            {% if checkout_context.form.delivery_tariff.errors %}
+              <div class="text-danger small mt-1">{{ checkout_context.form.delivery_tariff.errors }}</div>
+            {% endif %}
+            {% if checkout_context.form.delivery_address.errors %}
+              <div class="text-danger small mt-1">{{ checkout_context.form.delivery_address.errors }}</div>
+            {% endif %}
+
+            <div id="cdek-tariff-warning" class="alert alert-warning small mt-2 mb-0 d-none">
+              Для выбранного пункта выдачи нет доступных тарифов доставки.
+              Пожалуйста, выберите пункт выдачи в другом городе.
+            </div>
+
+            <div class="mt-3">
+              <label for="id_comment" class="form-label">{{ checkout_context.form.comment.label }}</label>
+              {{ checkout_context.form.comment }}
+              {% if checkout_context.form.comment.errors %}
+                <div class="text-danger small">{{ checkout_context.form.comment.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <button type="submit" name="action" value="place_order" class="btn btn-primary">
+            Оформить заказ
+          </button>
+        </div>
+      </form>
+      {% else %}
+      {# Гость: кнопки и приглашение #}
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
+        <div class="d-flex flex-wrap gap-2">
+          <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">Продолжить покупки</a>
+        </div>
+        <div class="fs-5 fw-bold">Итого: {{ cart.total_price|floatformat:0 }} ₽</div>
+      </div>
+
+      <div class="card mt-4 border-primary">
+        <div class="card-body">
+          <h3 class="h6 card-title">Оформление заказа</h3>
+          <p class="card-text mb-3">Войдите в аккаунт или зарегистрируйтесь, чтобы оформить заказ и указать доставку.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">Войти</a>
+            <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}" class="btn btn-outline-primary">Зарегистрироваться</a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
-    <div class="fs-5 fw-bold">Итого: {{ cart.total_price|floatformat:0 }} ₽</div>
+
+    {% if checkout_context %}
+    <div class="col-lg-5 mt-4 mt-lg-0">
+      <div class="card sticky-top">
+        <div class="card-header">
+          <h3 class="h6 mb-0">Ваш заказ</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <tbody>
+                {% for item in items %}
+                <tr>
+                  <td class="ps-0">
+                    <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none text-dark">
+                      {{ item.product.name }}
+                    </a>
+                    <span class="text-body-secondary">× {{ item.quantity }}</span>
+                  </td>
+                  <td class="text-end pe-0">{{ item.line_total|floatformat:0 }} ₽</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between mb-1">
+            <span>Товары:</span>
+            <span>{{ checkout_context.products_total|floatformat:0 }} ₽</span>
+          </div>
+          <div class="d-flex justify-content-between mb-1">
+            <span>Доставка:</span>
+            <span id="delivery-cost-display">
+              {% if checkout_context.delivery_cost is not None %}
+                {{ checkout_context.delivery_cost|floatformat:0 }} ₽
+                {% if checkout_context.delivery_period_min or checkout_context.delivery_period_max %}
+                  <span class="text-body-secondary small">
+                    ({{ checkout_context.delivery_period_min|default:"—" }}-{{ checkout_context.delivery_period_max|default:"—" }} дн.)
+                  </span>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-5">
+            <span>Итого:</span>
+            <span id="total-display">{{ checkout_context.total|floatformat:0 }} ₽</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
   {% else %}
   <p class="text-body-secondary">В корзине пока ничего нет.</p>
@@ -94,67 +283,309 @@
     </div>
   </div>
 </div>
+{% endif %}
 
+{% if items %}
 <script>
-  (function() {
-    document.querySelectorAll('.cart-quantity-form').forEach(function(form) {
-      var input = form.querySelector('input[name="quantity"]');
-      var display = form.querySelector('.cart-qty-value');
-      var minusBtn = form.querySelector('.cart-qty-minus');
-      var plusBtn = form.querySelector('.cart-qty-plus');
-      if (!input || !display) return;
+(function() {
+  document.querySelectorAll('.cart-quantity-form').forEach(function(form) {
+    var input = form.querySelector('input[name="quantity"]');
+    var display = form.querySelector('.cart-qty-value');
+    var minusBtn = form.querySelector('.cart-qty-minus');
+    var plusBtn = form.querySelector('.cart-qty-plus');
+    if (!input || !display) return;
 
-      function submitQty(q) {
-        q = parseInt(q, 10) || 0;
-        input.value = q;
-        display.textContent = q;
-        form.submit();
-      }
+    function submitQty(q) {
+      q = parseInt(q, 10) || 0;
+      input.value = q;
+      display.textContent = q;
+      form.submit();
+    }
 
-      if (minusBtn) {
-        minusBtn.addEventListener('click', function() {
-          var q = Math.max(0, parseInt(input.value, 10) - 1);
-          submitQty(q);
-        });
-      }
-      if (plusBtn) {
-        plusBtn.addEventListener('click', function() {
-          var q = parseInt(input.value, 10) + 1;
-          submitQty(q);
-        });
-      }
-    });
-
-    var removeModalEl = document.getElementById('cartRemoveModal');
-    var removeModalBody = document.getElementById('cartRemoveModalBody');
-    var confirmBtn = document.getElementById('cartRemoveModalConfirm');
-    var formToRemove = null;
-
-    document.querySelectorAll('.cart-remove-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var form = this.closest('form');
-        var productName = form && form.getAttribute('data-product-name');
-        formToRemove = form;
-        if (removeModalBody) {
-          removeModalBody.textContent = productName
-            ? 'Удалить «' + productName + '» из корзины?'
-            : 'Удалить позицию из корзины?';
-        }
-        if (removeModalEl && window.bootstrap) {
-          var modal = new bootstrap.Modal(removeModalEl);
-          modal.show();
-        }
-      });
-    });
-
-    if (confirmBtn && removeModalEl) {
-      confirmBtn.addEventListener('click', function() {
-        if (formToRemove) formToRemove.submit();
-        var modal = bootstrap.Modal.getInstance(removeModalEl);
-        if (modal) modal.hide();
+    if (minusBtn) {
+      minusBtn.addEventListener('click', function() {
+        var q = Math.max(0, parseInt(input.value, 10) - 1);
+        submitQty(q);
       });
     }
-  })();
+    if (plusBtn) {
+      plusBtn.addEventListener('click', function() {
+        var q = parseInt(input.value, 10) + 1;
+        submitQty(q);
+      });
+    }
+  });
+
+  var removeModalEl = document.getElementById('cartRemoveModal');
+  var removeModalBody = document.getElementById('cartRemoveModalBody');
+  var confirmBtn = document.getElementById('cartRemoveModalConfirm');
+  var formToRemove = null;
+
+  document.querySelectorAll('.cart-remove-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var form = this.closest('form');
+      var productName = form && form.getAttribute('data-product-name');
+      formToRemove = form;
+      if (removeModalBody) {
+        removeModalBody.textContent = productName
+          ? 'Удалить «' + productName + '» из корзины?'
+          : 'Удалить позицию из корзины?';
+      }
+      if (removeModalEl && window.bootstrap) {
+        var modal = new bootstrap.Modal(removeModalEl);
+        modal.show();
+      }
+    });
+  });
+
+  if (confirmBtn && removeModalEl) {
+    confirmBtn.addEventListener('click', function() {
+      if (formToRemove) formToRemove.submit();
+      var modal = bootstrap.Modal.getInstance(removeModalEl);
+      if (modal) modal.hide();
+    });
+  }
+})();
+</script>
+{% endif %}
+
+{% if checkout_context and checkout_context.yandex_maps_api_key %}
+<script>
+(function() {
+  var cityCodeInput       = document.getElementById('id_city_code');
+  var deliveryTariffInput = document.getElementById('id_delivery_tariff');
+  var deliveryModeInput   = document.getElementById('id_delivery_mode');
+  var productsTotal = parseFloat("{{ checkout_context.products_total|floatformat:2 }}".replace(',', '.')) || 0;
+
+  var tariffsPanel   = document.getElementById('cdek-tariffs-panel');
+  var tariffsList    = document.getElementById('cdek-tariffs-list');
+  var tariffsLoading = document.getElementById('cdek-tariffs-loading');
+  var tariffsError   = document.getElementById('cdek-tariffs-error');
+
+  function formatRub(value) {
+    if (typeof value !== 'number' || isNaN(value)) return '—';
+    return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0₽';
+  }
+
+  function getCsrfToken() {
+    var input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+  }
+
+  function clearTariffs() {
+    if (tariffsList) tariffsList.innerHTML = '';
+    if (tariffsPanel) tariffsPanel.classList.add('d-none');
+  }
+
+  function renderTariffs(tariffs) {
+    clearTariffs();
+    if (!tariffsPanel || !tariffsList) return;
+    if (!tariffs || !tariffs.length) return;
+
+    tariffs.forEach(function(tariff) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-outline-secondary w-100 text-start cdek-tariff-item';
+      btn.dataset.tariffCode = String(tariff.tariff_code);
+
+      var name = tariff.tariff_name || ('Тариф ' + (tariff.tariff_code || ''));
+      var desc = tariff.tariff_description || '';
+      var cost = Number(tariff.delivery_sum || 0);
+      var periodMin = tariff.period_min != null ? tariff.period_min : '—';
+      var periodMax = tariff.period_max != null ? tariff.period_max : '—';
+
+      btn.innerHTML =
+        '<div class="d-flex justify-content-between align-items-start">' +
+          '<div class="me-2">' +
+            '<div class="fw-semibold">' + name + '</div>' +
+            (desc ? '<div class="small text-body-secondary">' + desc + '</div>' : '') +
+          '</div>' +
+          '<div class="text-end">' +
+            '<div>' + formatRub(cost) + '</div>' +
+            '<div class="small text-body-secondary">' + periodMin + '–' + periodMax + ' дн.</div>' +
+          '</div>' +
+        '</div>';
+
+      btn.addEventListener('click', function() {
+        if (!tariffsList) return;
+        Array.prototype.forEach.call(
+          tariffsList.querySelectorAll('.cdek-tariff-item'),
+          function(el) {
+            el.classList.remove('active', 'btn-primary');
+            el.classList.add('btn-outline-secondary');
+          }
+        );
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-primary', 'active');
+
+        if (deliveryTariffInput) deliveryTariffInput.value = String(tariff.tariff_code);
+        updateSummary(tariff);
+      });
+
+      tariffsList.appendChild(btn);
+    });
+
+    tariffsPanel.classList.remove('d-none');
+  }
+
+  function loadTariffsFromBackend(mode, cityCode, cityName, pointType) {
+    if (!mode || (!cityCode && !cityName)) return;
+    var url = "{% url 'orders:checkout_tariffs' %}";
+    var csrf = getCsrfToken();
+    if (!url) return;
+
+    if (tariffsError) {
+      tariffsError.textContent = '';
+      tariffsError.classList.add('d-none');
+    }
+    clearTariffs();
+    if (tariffsLoading) tariffsLoading.classList.remove('d-none');
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf
+      },
+      body: JSON.stringify({
+        mode: mode,
+        city_code: cityCode,
+        city: cityName || '',
+        point_type: pointType || ''
+      })
+    })
+      .then(function(response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        return response.json();
+      })
+      .then(function(data) {
+        if (tariffsLoading) tariffsLoading.classList.add('d-none');
+        if (cityCodeInput && data && data.city_code != null) {
+          cityCodeInput.value = String(data.city_code);
+        }
+        var tariffs = data && Array.isArray(data.tariffs) ? data.tariffs : [];
+        renderTariffs(tariffs);
+        if (!tariffs.length && mode === 'office') {
+          var warning = document.getElementById('cdek-tariff-warning');
+          if (warning) warning.classList.remove('d-none');
+        }
+      })
+      .catch(function(error) {
+        if (tariffsLoading) tariffsLoading.classList.add('d-none');
+        if (tariffsError) {
+          tariffsError.textContent = 'Не удалось получить тарифы доставки. Попробуйте позже.';
+          tariffsError.classList.remove('d-none');
+        }
+        console.warn('CDEK tariffs load error:', error);
+      });
+  }
+
+  function updateSummary(tariff) {
+    var costEl  = document.getElementById('delivery-cost-display');
+    var totalEl = document.getElementById('total-display');
+    if (!costEl || !totalEl || !tariff) return;
+    var cost = Number(tariff.delivery_sum || 0);
+    var html = formatRub(cost);
+    if (tariff.period_min != null || tariff.period_max != null) {
+      html += ' <span class="text-body-secondary small">('
+            + (tariff.period_min != null ? tariff.period_min : '—')
+            + '–'
+            + (tariff.period_max != null ? tariff.period_max : '—')
+            + '\u00a0дн.)</span>';
+    }
+    costEl.innerHTML = html;
+    totalEl.textContent = formatRub(productsTotal + cost);
+  }
+
+  var cdekWidgetInited = false;
+  var cdekServiceUrl   = "{{ checkout_context.cdek_service_url|escapejs }}";
+  var yandexMapsApiKey = "{{ checkout_context.yandex_maps_api_key|escapejs }}";
+
+  function initCdekWidget() {
+    if (cdekWidgetInited) return;
+    if (typeof window.CDEKWidget === 'undefined' || !cdekServiceUrl || !yandexMapsApiKey) return;
+    if (!document.getElementById('cdek-widget-container')) return;
+    cdekWidgetInited = true;
+    try {
+      window.cdekWidgetInstance = new window.CDEKWidget({
+        defaultLocation: [30.315868, 59.939095],
+        root: 'cdek-widget-container',
+        apiKey: yandexMapsApiKey,
+        servicePath: cdekServiceUrl,
+        canChoose: true,
+        tariffs: { office: [], pickup: [], door: [] },
+        hideFilters: {
+          have_cashless: true,
+          have_cash: true,
+          is_dressing_room: true,
+          type: false
+        },
+        forceFilters: { type: null },
+        hideDeliveryOptions: { door: false, office: false },
+        onChoose: function(mode, tariff, address) {
+          var pvzInput      = document.getElementById('id_pvz_code');
+          var addrTextarea  = document.getElementById('id_delivery_address');
+          var addrLabel     = document.getElementById('cdek-pvz-address');
+          var selectedBlock = document.getElementById('cdek-pvz-selected');
+          var warning       = document.getElementById('cdek-tariff-warning');
+
+          if (deliveryTariffInput) deliveryTariffInput.value = '';
+          if (deliveryModeInput) deliveryModeInput.value = '';
+          clearTariffs();
+          var costEl = document.getElementById('delivery-cost-display');
+          var totalEl = document.getElementById('total-display');
+          if (costEl) costEl.textContent = '—';
+          if (totalEl) totalEl.textContent = formatRub(productsTotal);
+          if (warning) warning.classList.add('d-none');
+
+          if (mode === 'office' && address) {
+            if (pvzInput) pvzInput.value = address.code || '';
+            if (cityCodeInput && address.city_code) cityCodeInput.value = address.city_code;
+            if (addrTextarea) addrTextarea.value = '';
+            var addrText = (address.city || '') + (address.address ? ', ' + address.address : '');
+            if (addrLabel) addrLabel.textContent = addrText || address.code || '—';
+          } else if (mode === 'door' && address) {
+            if (pvzInput) pvzInput.value = '';
+            var formatted = address.formatted || address.address || '';
+            if (addrLabel) addrLabel.textContent = formatted || '—';
+            if (addrTextarea && formatted) addrTextarea.value = formatted;
+            if (cityCodeInput) cityCodeInput.value = '';
+          }
+
+          if (selectedBlock) selectedBlock.classList.remove('d-none');
+          if (deliveryModeInput) deliveryModeInput.value = mode;
+
+          var cityCode = null;
+          var cityName = null;
+          var pointType = null;
+          if (mode === 'office' && address) {
+            cityCode = address.city_code || null;
+            cityName = address.city || null;
+            pointType = address.type || null;
+          } else if (mode === 'door' && address) {
+            cityName = address.city || null;
+          }
+          if (cityCode || cityName) {
+            loadTariffsFromBackend(mode, cityCode, cityName, pointType);
+          }
+        }
+      });
+    } catch (e) {
+      cdekWidgetInited = false;
+      console.warn('CDEK widget init error:', e);
+    }
+  }
+
+  function waitForYMapsAndInit() {
+    if (typeof window.ymaps3 !== 'undefined' && window.ymaps3.ready) {
+      window.ymaps3.ready.then(function() { initCdekWidget(); });
+      return;
+    }
+    setTimeout(waitForYMapsAndInit, 300);
+  }
+
+  waitForYMapsAndInit();
+})();
 </script>
 {% endif %}
 {% endblock %}
