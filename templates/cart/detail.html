@@ -12,10 +12,14 @@
   <h2 class="mb-4">Корзина</h2>
 
   {% if items %}
-  <div class="row">
-    <div class="col-lg-{% if checkout_context %}7{% else %}12{% endif %}">
+  {# Карточка «Корзина» со списком товаров #}
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3 class="h6 mb-0">Корзина</h3>
+    </div>
+    <div class="card-body">
       <div class="table-responsive cart-table-wrap">
-        <table class="table table-hover align-middle cart-table">
+        <table class="table table-hover align-middle cart-table mb-0">
           <thead class="table-light cart-table-head">
             <tr>
               <th class="cart-th-photo">Фото</th>
@@ -67,197 +71,184 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
 
-      {% if checkout_context %}
-      <div class="mt-3">
-        <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary btn-sm">Продолжить покупки</a>
+  {% if checkout_context %}
+  {# Авторизованный пользователь: карточки Получатель, Доставка, Итого + кнопки #}
+  <form method="post" id="checkout-form" novalidate class="mb-0">
+    {% csrf_token %}
+    {% if checkout_context.form.non_field_errors %}
+      <div class="alert alert-danger">{{ checkout_context.form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="h6 mb-0">Получатель</h3>
       </div>
-      {# Блок оформления заказа для авторизованных #}
-      <form method="post" id="checkout-form" novalidate class="mt-4">
-        {% csrf_token %}
-        {% if checkout_context.form.non_field_errors %}
-          <div class="alert alert-danger">{{ checkout_context.form.non_field_errors }}</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label for="id_recipient_name" class="form-label">{{ checkout_context.form.recipient_name.label }}</label>
+          {{ checkout_context.form.recipient_name }}
+          {% if checkout_context.form.recipient_name.errors %}
+            <div class="text-danger small">{{ checkout_context.form.recipient_name.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label for="id_recipient_phone" class="form-label">{{ checkout_context.form.recipient_phone.label }}</label>
+          {{ checkout_context.form.recipient_phone }}
+          {% if checkout_context.form.recipient_phone.errors %}
+            <div class="text-danger small">{{ checkout_context.form.recipient_phone.errors }}</div>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <label for="id_recipient_email" class="form-label">{{ checkout_context.form.recipient_email.label }}</label>
+          {{ checkout_context.form.recipient_email }}
+          {% if checkout_context.form.recipient_email.errors %}
+            <div class="text-danger small">{{ checkout_context.form.recipient_email.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h3 class="h6 mb-0">Доставка СДЭК</h3>
+      </div>
+      <div class="card-body">
+        <p class="text-body-secondary small mb-3">
+          Отправка товаров из Санкт-Петербурга (ПВЗ).
+          Выберите пункт выдачи или адрес на карте, нажмите в карточке кнопку <strong>«Выбрать»</strong>,
+          затем укажите вариант доставки в блоке «Варианты доставки» ниже.
+        </p>
+
+        <div class="d-none">
+          {{ checkout_context.form.delivery_tariff }}
+          {{ checkout_context.form.delivery_mode }}
+          {{ checkout_context.form.city_code }}
+          {{ checkout_context.form.pvz_code }}
+          {{ checkout_context.form.delivery_address }}
+        </div>
+
+        {% if not checkout_context.yandex_maps_api_key %}
+        <p class="alert alert-warning small mb-3">
+          Карта ПВЗ недоступна: не задан ключ Яндекс.Карт (YANDEX_MAPS_API_KEY).
+        </p>
         {% endif %}
 
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3 class="h6 mb-0">Получатель</h3>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <label for="id_recipient_name" class="form-label">{{ checkout_context.form.recipient_name.label }}</label>
-              {{ checkout_context.form.recipient_name }}
-              {% if checkout_context.form.recipient_name.errors %}
-                <div class="text-danger small">{{ checkout_context.form.recipient_name.errors }}</div>
-              {% endif %}
-            </div>
-            <div class="mb-3">
-              <label for="id_recipient_phone" class="form-label">{{ checkout_context.form.recipient_phone.label }}</label>
-              {{ checkout_context.form.recipient_phone }}
-              {% if checkout_context.form.recipient_phone.errors %}
-                <div class="text-danger small">{{ checkout_context.form.recipient_phone.errors }}</div>
-              {% endif %}
-            </div>
-            <div class="mb-3">
-              <label for="id_recipient_email" class="form-label">{{ checkout_context.form.recipient_email.label }}</label>
-              {{ checkout_context.form.recipient_email }}
-              {% if checkout_context.form.recipient_email.errors %}
-                <div class="text-danger small">{{ checkout_context.form.recipient_email.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
+        <div id="cdek-widget-container" style="width: 100%; height: 500px;"></div>
+
+        <div id="cdek-pvz-selected" class="alert alert-light border small mt-2 mb-0 d-none" role="status">
+          <strong>Выбрано:</strong> <span id="cdek-pvz-address"></span>
         </div>
 
-        <div class="card mb-4">
-          <div class="card-header">
-            <h3 class="h6 mb-0">Доставка СДЭК</h3>
-          </div>
-          <div class="card-body">
-            <p class="text-body-secondary small mb-3">
-              Отправка товаров из Санкт-Петербурга (ПВЗ).
-              Выберите пункт выдачи или адрес на карте, нажмите в карточке кнопку <strong>«Выбрать»</strong>,
-              затем укажите вариант доставки в блоке «Варианты доставки» ниже.
-            </p>
+        <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">
+          Рассчитываем доступные тарифы доставки…
+        </div>
+        <div id="cdek-tariffs-panel" class="mt-2 d-none">
+          <h4 class="h6 mb-2">Варианты доставки</h4>
+          <div id="cdek-tariffs-list" class="d-grid gap-2"></div>
+        </div>
+        <div id="cdek-tariffs-error" class="alert alert-danger small mt-2 d-none"></div>
 
-            <div class="d-none">
-              {{ checkout_context.form.delivery_tariff }}
-              {{ checkout_context.form.delivery_mode }}
-              {{ checkout_context.form.city_code }}
-              {{ checkout_context.form.pvz_code }}
-              {{ checkout_context.form.delivery_address }}
-            </div>
+        {% if checkout_context.form.pvz_code.errors %}
+          <div class="text-danger small mt-1">{{ checkout_context.form.pvz_code.errors }}</div>
+        {% endif %}
+        {% if checkout_context.form.city_code.errors %}
+          <div class="text-danger small mt-1">{{ checkout_context.form.city_code.errors }}</div>
+        {% endif %}
+        {% if checkout_context.form.delivery_tariff.errors %}
+          <div class="text-danger small mt-1">{{ checkout_context.form.delivery_tariff.errors }}</div>
+        {% endif %}
+        {% if checkout_context.form.delivery_address.errors %}
+          <div class="text-danger small mt-1">{{ checkout_context.form.delivery_address.errors }}</div>
+        {% endif %}
 
-            {% if not checkout_context.yandex_maps_api_key %}
-            <p class="alert alert-warning small mb-3">
-              Карта ПВЗ недоступна: не задан ключ Яндекс.Карт (YANDEX_MAPS_API_KEY).
-            </p>
-            {% endif %}
-
-            <div id="cdek-widget-container" style="width: 100%; height: 500px;"></div>
-
-            <div id="cdek-pvz-selected" class="alert alert-light border small mt-2 mb-0 d-none" role="status">
-              <strong>Выбрано:</strong> <span id="cdek-pvz-address"></span>
-            </div>
-
-            <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">
-              Рассчитываем доступные тарифы доставки…
-            </div>
-            <div id="cdek-tariffs-panel" class="mt-2 d-none">
-              <h4 class="h6 mb-2">Варианты доставки</h4>
-              <div id="cdek-tariffs-list" class="d-grid gap-2"></div>
-            </div>
-            <div id="cdek-tariffs-error" class="alert alert-danger small mt-2 d-none"></div>
-
-            {% if checkout_context.form.pvz_code.errors %}
-              <div class="text-danger small mt-1">{{ checkout_context.form.pvz_code.errors }}</div>
-            {% endif %}
-            {% if checkout_context.form.city_code.errors %}
-              <div class="text-danger small mt-1">{{ checkout_context.form.city_code.errors }}</div>
-            {% endif %}
-            {% if checkout_context.form.delivery_tariff.errors %}
-              <div class="text-danger small mt-1">{{ checkout_context.form.delivery_tariff.errors }}</div>
-            {% endif %}
-            {% if checkout_context.form.delivery_address.errors %}
-              <div class="text-danger small mt-1">{{ checkout_context.form.delivery_address.errors }}</div>
-            {% endif %}
-
-            <div id="cdek-tariff-warning" class="alert alert-warning small mt-2 mb-0 d-none">
-              Для выбранного пункта выдачи нет доступных тарифов доставки.
-              Пожалуйста, выберите пункт выдачи в другом городе.
-            </div>
-
-            <div class="mt-3">
-              <label for="id_comment" class="form-label">{{ checkout_context.form.comment.label }}</label>
-              {{ checkout_context.form.comment }}
-              {% if checkout_context.form.comment.errors %}
-                <div class="text-danger small">{{ checkout_context.form.comment.errors }}</div>
-              {% endif %}
-            </div>
-          </div>
+        <div id="cdek-tariff-warning" class="alert alert-warning small mt-2 mb-0 d-none">
+          Для выбранного пункта выдачи нет доступных тарифов доставки.
+          Пожалуйста, выберите пункт выдачи в другом городе.
         </div>
 
-        <div class="d-flex flex-wrap gap-2 mb-4">
-          <button type="submit" name="action" value="place_order" class="btn btn-primary">
-            Оформить заказ
-          </button>
-        </div>
-      </form>
-      {% else %}
-      {# Гость: кнопки и приглашение #}
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
-        <div class="d-flex flex-wrap gap-2">
-          <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">Продолжить покупки</a>
-        </div>
-        <div class="fs-5 fw-bold">Итого: {{ cart.total_price|floatformat:0 }} ₽</div>
-      </div>
-
-      <div class="card mt-4 border-primary">
-        <div class="card-body">
-          <h3 class="h6 card-title">Оформление заказа</h3>
-          <p class="card-text mb-3">Войдите в аккаунт или зарегистрируйтесь, чтобы оформить заказ и указать доставку.</p>
-          <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="btn btn-primary">Войти</a>
-            <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}" class="btn btn-outline-primary">Зарегистрироваться</a>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    {% if checkout_context %}
-    <div class="col-lg-5 mt-4 mt-lg-0">
-      <div class="card sticky-top">
-        <div class="card-header">
-          <h3 class="h6 mb-0">Ваш заказ</h3>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <tbody>
-                {% for item in items %}
-                <tr>
-                  <td class="ps-0">
-                    <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none text-dark">
-                      {{ item.product.name }}
-                    </a>
-                    <span class="text-body-secondary">× {{ item.quantity }}</span>
-                  </td>
-                  <td class="text-end pe-0">{{ item.line_total|floatformat:0 }} ₽</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <hr>
-          <div class="d-flex justify-content-between mb-1">
-            <span>Товары:</span>
-            <span>{{ checkout_context.products_total|floatformat:0 }} ₽</span>
-          </div>
-          <div class="d-flex justify-content-between mb-1">
-            <span>Доставка:</span>
-            <span id="delivery-cost-display">
-              {% if checkout_context.delivery_cost is not None %}
-                {{ checkout_context.delivery_cost|floatformat:0 }} ₽
-                {% if checkout_context.delivery_period_min or checkout_context.delivery_period_max %}
-                  <span class="text-body-secondary small">
-                    ({{ checkout_context.delivery_period_min|default:"—" }}-{{ checkout_context.delivery_period_max|default:"—" }} дн.)
-                  </span>
-                {% endif %}
-              {% else %}
-                —
-              {% endif %}
-            </span>
-          </div>
-          <hr>
-          <div class="d-flex justify-content-between fw-bold fs-5">
-            <span>Итого:</span>
-            <span id="total-display">{{ checkout_context.total|floatformat:0 }} ₽</span>
-          </div>
+        <div class="mt-3">
+          <label for="id_comment" class="form-label">{{ checkout_context.form.comment.label }}</label>
+          {{ checkout_context.form.comment }}
+          {% if checkout_context.form.comment.errors %}
+            <div class="text-danger small">{{ checkout_context.form.comment.errors }}</div>
+          {% endif %}
         </div>
       </div>
     </div>
-    {% endif %}
+  </form>
+
+  {# Карточка «Итого» #}
+  <div class="card mb-3">
+    <div class="card-header">
+      <h3 class="h6 mb-0">Итого</h3>
+    </div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between mb-1">
+        <span>Товары:</span>
+        <span>{{ checkout_context.products_total|floatformat:0 }} ₽</span>
+      </div>
+      <div class="d-flex justify-content-between mb-1">
+        <span>Доставка:</span>
+        <span id="delivery-cost-display">
+          {% if checkout_context.delivery_cost is not None %}
+            {{ checkout_context.delivery_cost|floatformat:0 }} ₽
+            {% if checkout_context.delivery_period_min or checkout_context.delivery_period_max %}
+              <span class="text-body-secondary small">
+                ({{ checkout_context.delivery_period_min|default:"—" }}-{{ checkout_context.delivery_period_max|default:"—" }} дн.)
+              </span>
+            {% endif %}
+          {% else %}
+            укажите адрес
+          {% endif %}
+        </span>
+      </div>
+      <hr>
+      <div class="d-flex justify-content-between fw-bold fs-5">
+        <span>Итого:</span>
+        <span id="total-display">{{ checkout_context.total|floatformat:0 }} ₽</span>
+      </div>
+    </div>
   </div>
+
+  {# Кнопки под карточками #}
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    <button
+      type="submit"
+      form="checkout-form"
+      name="action"
+      value="place_order"
+      class="btn btn-primary"
+      id="place-order-btn"
+      {% if not checkout_context.delivery_cost %}disabled{% endif %}
+    >
+      Оформить заказ
+    </button>
+    <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">
+      Продолжить покупки
+    </a>
+    <form action="{% url 'cart:clear' %}" method="post" class="ms-md-auto">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-danger">
+        Очистить корзину
+      </button>
+    </form>
+  </div>
+
+  {% else %}
+  {# Гость: только корзина и абзац со ссылками #}
+  <p class="mt-3 mb-0">
+    Войдите или <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}">зарегистрируйтесь</a>
+    для оформления заказа.
+  </p>
+  <p class="mt-1 mb-4">
+    <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Войти</a>
+    или <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}">зарегистрироваться</a>.
+  </p>
+  {% endif %}
+
   {% else %}
   <p class="text-body-secondary">В корзине пока ничего нет.</p>
   <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Перейти в каталог</a>
@@ -355,6 +346,7 @@
   var cityCodeInput       = document.getElementById('id_city_code');
   var deliveryTariffInput = document.getElementById('id_delivery_tariff');
   var deliveryModeInput   = document.getElementById('id_delivery_mode');
+  var placeOrderBtn       = document.getElementById('place-order-btn');
   var productsTotal = parseFloat("{{ checkout_context.products_total|floatformat:2 }}".replace(',', '.')) || 0;
 
   var tariffsPanel   = document.getElementById('cdek-tariffs-panel');
@@ -428,6 +420,11 @@
     tariffsPanel.classList.remove('d-none');
   }
 
+  function setOrderButtonEnabled(enabled) {
+    if (!placeOrderBtn) return;
+    placeOrderBtn.disabled = !enabled;
+  }
+
   function loadTariffsFromBackend(mode, cityCode, cityName, pointType) {
     if (!mode || (!cityCode && !cityName)) return;
     var url = "{% url 'orders:checkout_tariffs' %}";
@@ -495,6 +492,7 @@
     }
     costEl.innerHTML = html;
     totalEl.textContent = formatRub(productsTotal + cost);
+    setOrderButtonEnabled(true);
   }
 
   var cdekWidgetInited = false;
@@ -534,9 +532,10 @@
           clearTariffs();
           var costEl = document.getElementById('delivery-cost-display');
           var totalEl = document.getElementById('total-display');
-          if (costEl) costEl.textContent = '—';
+          if (costEl) costEl.textContent = 'укажите адрес';
           if (totalEl) totalEl.textContent = formatRub(productsTotal);
           if (warning) warning.classList.add('d-none');
+          setOrderButtonEnabled(false);
 
           if (mode === 'office' && address) {
             if (pvzInput) pvzInput.value = address.code || '';
@@ -584,7 +583,15 @@
     setTimeout(waitForYMapsAndInit, 300);
   }
 
+  // Инициализация виджета и начальное состояние кнопки
   waitForYMapsAndInit();
+
+  // Если тариф уже выбран (например, после валидации формы), включаем кнопку
+  if (deliveryTariffInput && deliveryTariffInput.value) {
+    setOrderButtonEnabled(true);
+  } else {
+    setOrderButtonEnabled(false);
+  }
 })();
 </script>
 {% endif %}

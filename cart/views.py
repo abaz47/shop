@@ -101,3 +101,11 @@ def cart_remove(request, product_id):
     )
     item.delete()
     return redirect("cart:detail")
+
+
+@require_POST
+def cart_clear(request):
+    """Очистить корзину (POST)."""
+    cart = get_or_create_cart(request)
+    cart.items.all().delete()
+    return redirect("cart:detail")
