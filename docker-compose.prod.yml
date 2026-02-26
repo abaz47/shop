@@ -46,6 +46,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_files:/var/www/staticfiles:ro
       - media_files:/var/www/media:ro
@@ -55,6 +56,16 @@ services:
       - .env
     depends_on:
       - web
+    restart: always
+
+  cdek-widget:
+    image: php:8.2-fpm
+    env_file:
+      - .env
+    volumes:
+      - ./cdek-widget/service.php:/var/www/html/service.php:ro
+    expose:
+      - "9000"
     restart: always
 
   certbot:

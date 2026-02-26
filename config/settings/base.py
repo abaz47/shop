@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     "cart",
     "catalog",
     "core",
+    "orders",
+    "cdek",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -134,3 +136,22 @@ RECAPTCHA_REQUIRED_SCORE = 0.85  # Порог для reCAPTCHA v3
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/accounts/profile/"
 LOGOUT_REDIRECT_URL = "/"
+
+# СДЭК API (из .env)
+CDEK_ACCOUNT = os.environ.get("CDEK_ACCOUNT", "")
+CDEK_SECURE = os.environ.get("CDEK_SECURE", "")
+CDEK_TEST = os.environ.get(
+    "CDEK_TEST", "1"
+).strip().lower() in ("1", "true", "yes")
+CDEK_FROM_CITY_CODE = int(
+    os.environ.get("CDEK_FROM_CITY_CODE", "137") or "137"
+)
+CDEK_FROM_CITY_NAME = os.environ.get("CDEK_FROM_CITY_NAME", "Санкт-Петербург")
+CDEK_FROM_ADDRESS = os.environ.get("CDEK_FROM_ADDRESS", "")
+# Код ПВЗ, из которого отправляются посылки
+CDEK_FROM_PVZ_CODE = os.environ.get("CDEK_FROM_PVZ_CODE", "")
+# Данные отправителя для заказов в СДЭК (имя/компания/телефон)
+CDEK_SENDER_NAME = os.environ.get("CDEK_SENDER_NAME", "")
+CDEK_SENDER_PHONE = os.environ.get("CDEK_SENDER_PHONE", "")
+CDEK_SENDER_COMPANY = os.environ.get("CDEK_SENDER_COMPANY", "")
+YANDEX_MAPS_API_KEY = os.environ.get("YANDEX_MAPS_API_KEY", "")

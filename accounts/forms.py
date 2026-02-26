@@ -146,14 +146,10 @@ class CustomPasswordResetForm(PasswordResetForm):
 
 class ProfileEditForm(forms.ModelForm):
     """
-    Форма редактирования профиля пользователя.
+    Форма редактирования профиля: Фамилия, Имя, Отчество, Телефон и др.
+    Email и логин в форме не меняются (только отображаются в ЛК).
     """
 
-    email = forms.EmailField(
-        label="Email",
-        required=True,
-        widget=forms.EmailInput(attrs={"class": "form-control"}),
-    )
     first_name = forms.CharField(
         label="Имя",
         max_length=150,
@@ -169,44 +165,22 @@ class ProfileEditForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ("phone", "birth_date", "address")
+        fields = ("patronymic", "phone")
         widgets = {
+            "patronymic": forms.TextInput(attrs={"class": "form-control"}),
             "phone": forms.TextInput(attrs={"class": "form-control"}),
-            "birth_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"},
-            ),
-            "address": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        # Инициализируем поля из User
         if self.instance and self.instance.user:
-            self.fields["email"].initial = self.instance.user.email
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
 
-    def clean_email(self):
-        """Проверяет уникальность email."""
-        email = self.cleaned_data.get("email")
-        if (
-            email
-            and self.user.email != email
-            and self.user.__class__.objects.filter(email=email).exists()
-        ):
-            raise ValidationError(
-                "Пользователь с таким email уже существует."
-            )
-        return email
-
     def save(self, commit=True):
-        """Сохраняет изменения в профиле и пользователе."""
+        """Сохраняет изменения в профиле и пользователе (без смены email)."""
         profile = super().save(commit=False)
-        # Обновляем данные пользователя
-        self.user.email = self.cleaned_data["email"]
         self.user.first_name = self.cleaned_data.get("first_name", "")
         self.user.last_name = self.cleaned_data.get("last_name", "")
         if commit:

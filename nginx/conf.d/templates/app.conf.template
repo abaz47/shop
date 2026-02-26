@@ -24,6 +24,9 @@ server {
 
     client_max_body_size 10M;
 
+    proxy_hide_header Referrer-Policy;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
     # Статика Django (collectstatic)
     location /static/ {
         alias /var/www/staticfiles/;
@@ -38,6 +41,16 @@ server {
         access_log off;
         expires 7d;
         add_header Cache-Control "public";
+    }
+
+    # service.php — виджет СДЭК через PHP-FPM (без Apache, без редиректов)
+    location ~ ^/service\.php(/.*)?$ {
+        fastcgi_pass   cdek_widget;
+        include        fastcgi_params;
+        fastcgi_param  SCRIPT_FILENAME /var/www/html/service.php;
+        fastcgi_param  QUERY_STRING    $args;
+        fastcgi_param  SCRIPT_NAME     /service.php;
+        fastcgi_param  REQUEST_URI     /service.php?$args;
     }
 
     # Всё остальное → gunicorn

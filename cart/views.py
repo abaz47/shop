@@ -3,7 +3,7 @@
 """
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from catalog.models import Product
 
@@ -11,18 +11,38 @@ from .models import CartItem
 from .utils import get_or_create_cart
 
 
+@require_http_methods(["GET", "POST"])
 def cart_detail(request):
-    """Страница корзины."""
+    """
+    Единая страница корзины и оформления заказа (/cart).
+    Для гостей: корзина и приглашение войти/зарегистрироваться.
+    Для авторизованных с непустой корзиной: корзина и форма оформления.
+    """
     cart = get_or_create_cart(request)
-    items = (
+    items = list(
         cart.items.select_related("product")
         .prefetch_related("product__images")
         .order_by("id")
     )
+
+    checkout_context = None
+    if request.user.is_authenticated and items:
+        from orders.views import _get_checkout_context
+
+        redirect_response, checkout_context = _get_checkout_context(
+            request, cart, items, cart.total_price
+        )
+        if redirect_response is not None:
+            return redirect_response
+
     return render(
         request,
         "cart/detail.html",
-        {"cart": cart, "items": items},
+        {
+            "cart": cart,
+            "items": items,
+            "checkout_context": checkout_context,
+        },
     )
 
 
@@ -80,4 +100,12 @@ def cart_remove(request, product_id):
         CartItem.objects.filter(cart=cart, product_id=product_id)
     )
     item.delete()
+    return redirect("cart:detail")
+
+
+@require_POST
+def cart_clear(request):
+    """Очистить корзину (POST)."""
+    cart = get_or_create_cart(request)
+    cart.items.all().delete()
     return redirect("cart:detail")

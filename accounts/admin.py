@@ -10,7 +10,7 @@ from .models import EmailVerification, UserProfile
 class UserProfileAdmin(admin.ModelAdmin):
     """Админка для профилей пользователей."""
 
-    list_display = ("user", "phone", "created_at")
+    list_display = ("user", "patronymic", "phone", "created_at")
     search_fields = ("user__username", "user__email", "phone")
     readonly_fields = ("created_at", "updated_at")
 
