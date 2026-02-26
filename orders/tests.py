@@ -39,14 +39,24 @@ class TestTariffHelpers:
 
     def test_is_allowed_tariff_family_accepts_parcel_and_express(self):
         assert order_views._is_allowed_tariff_family("Посылка склад-склад")
-        assert order_views._is_allowed_tariff_family("экономичная посылка склад-постамат")
+        assert order_views._is_allowed_tariff_family(
+            "экономичная посылка склад-постамат"
+        )
         assert order_views._is_allowed_tariff_family("Экспресс склад-дверь")
-        assert not order_views._is_allowed_tariff_family("Какой-то другой тариф")
+        assert not order_views._is_allowed_tariff_family(
+            "Какой-то другой тариф"
+        )
 
     def test_tariff_kind_by_name_classifies_directions(self):
-        assert order_views._tariff_kind_by_name("Посылка склад-склад") == "office"
-        assert order_views._tariff_kind_by_name("Экономичная посылка склад-постамат") == "pickup"
-        assert order_views._tariff_kind_by_name("Посылка склад-дверь") == "door"
+        assert order_views._tariff_kind_by_name(
+            "Посылка склад-склад"
+        ) == "office"
+        assert order_views._tariff_kind_by_name(
+            "Экономичная посылка склад-постамат"
+        ) == "pickup"
+        assert order_views._tariff_kind_by_name(
+            "Посылка склад-дверь"
+        ) == "door"
         # Неподходящие направления
         assert order_views._tariff_kind_by_name("Посылка дверь-дверь") is None
         assert order_views._tariff_kind_by_name("Посылка дверь-склад") is None
@@ -70,7 +80,11 @@ class TestTariffHelpers:
             },
         ]
         # Для ПВЗ должны остаться только склад-склад
-        filtered = order_views._filter_tariffs_for_response(raw, mode="office", point_type="PVZ")
+        filtered = order_views._filter_tariffs_for_response(
+            raw,
+            mode="office",
+            point_type="PVZ"
+        )
         assert len(filtered) == 1
         assert filtered[0]["tariff_code"] == 136
 
@@ -106,7 +120,11 @@ class TestTariffHelpers:
                 "delivery_sum": 150,
             },
         ]
-        filtered = order_views._filter_tariffs_for_response(raw, mode="door", point_type="")
+        filtered = order_views._filter_tariffs_for_response(
+            raw,
+            mode="door",
+            point_type=""
+        )
         assert len(filtered) == 1
         assert filtered[0]["tariff_code"] == 137
 
@@ -120,7 +138,11 @@ class TestCheckoutCitiesView:
         assert response.status_code == 200
         assert response.json() == {"cities": []}
 
-    def test_checkout_cities_uses_search_cities_service(self, client, monkeypatch):
+    def test_checkout_cities_uses_search_cities_service(
+        self,
+        client,
+        monkeypatch
+    ):
         url = reverse("orders:checkout_cities")
         called = {}
 
@@ -163,7 +185,12 @@ class TestCheckoutTariffsView:
         # login_required → редирект на страницу логина
         assert response.status_code in {302, 301}
 
-    def test_checkout_tariffs_returns_filtered_tariffs(self, client, monkeypatch, settings):
+    def test_checkout_tariffs_returns_filtered_tariffs(
+        self,
+        client,
+        monkeypatch,
+        settings
+    ):
         settings.CDEK_FROM_CITY_CODE = 137
         self._auth_client_with_cart(client)
 
@@ -184,10 +211,19 @@ class TestCheckoutTariffsView:
                 },
             ]
 
-        monkeypatch.setattr(order_views, "calculate_tarifflist", fake_tarifflist)
+        monkeypatch.setattr(
+            order_views,
+            "calculate_tarifflist",
+            fake_tarifflist
+        )
 
         url = reverse("orders:checkout_tariffs")
-        body = {"mode": "office", "city_code": 44, "city": "", "point_type": "PVZ"}
+        body = {
+            "mode": "office",
+            "city_code": 44,
+            "city": "",
+            "point_type": "PVZ"
+        }
         response = client.post(
             url,
             data=json.dumps(body),
@@ -199,7 +235,12 @@ class TestCheckoutTariffsView:
         # Для ПВЗ должен остаться только склад-склад
         assert [t["tariff_code"] for t in data["tariffs"]] == [136]
 
-    def test_checkout_tariffs_uses_city_name_when_code_missing(self, client, monkeypatch, settings):
+    def test_checkout_tariffs_uses_city_name_when_code_missing(
+        self,
+        client,
+        monkeypatch,
+        settings
+    ):
         settings.CDEK_FROM_CITY_CODE = 137
         self._auth_client_with_cart(client)
 
@@ -211,7 +252,11 @@ class TestCheckoutTariffsView:
             return []
 
         monkeypatch.setattr(order_views, "search_cities", fake_search)
-        monkeypatch.setattr(order_views, "calculate_tarifflist", fake_tarifflist)
+        monkeypatch.setattr(
+            order_views,
+            "calculate_tarifflist",
+            fake_tarifflist
+        )
 
         url = reverse("orders:checkout_tariffs")
         body = {"mode": "office", "city": "Москва", "point_type": "PVZ"}
@@ -259,14 +304,22 @@ class TestCreateCdekOrder:
         )
         return order
 
-    def test_create_cdek_order_returns_none_when_client_missing(self, settings, caplog):
+    def test_create_cdek_order_returns_none_when_client_missing(
+        self,
+        settings,
+        caplog
+    ):
         settings.CDEK_ACCOUNT = ""
         settings.CDEK_SECURE = ""
         order = self._create_order_with_items()
         uuid = order_services.create_cdek_order(order)
         assert uuid is None
 
-    def test_create_cdek_order_sends_payload_to_client(self, settings, monkeypatch):
+    def test_create_cdek_order_sends_payload_to_client(
+        self,
+        settings,
+        monkeypatch
+    ):
         settings.CDEK_ACCOUNT = "test"
         settings.CDEK_SECURE = "secret"
         settings.CDEK_FROM_PVZ_CODE = "FROMPVZ"
@@ -286,7 +339,11 @@ class TestCreateCdekOrder:
                     "requests": [],
                 }
 
-        monkeypatch.setattr(order_services, "get_client", lambda: DummyClient())
+        monkeypatch.setattr(
+            order_services,
+            "get_client",
+            lambda: DummyClient()
+        )
         uuid = order_services.create_cdek_order(order)
         assert uuid == "cdek-uuid-123"
         assert calls["kwargs"]["number"] == str(order.pk)
@@ -298,4 +355,3 @@ class TestCreateCdekOrder:
         assert calls["kwargs"]["delivery_point"] == order.pvz_code
         assert calls["kwargs"]["to_city_code"] is None
         assert calls["kwargs"]["to_address"] is None
-

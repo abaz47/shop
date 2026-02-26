@@ -38,15 +38,21 @@ class TestDeliverySumToDecimal:
         assert cdek_services.delivery_sum_to_decimal({}) == Decimal("0")
 
     def test_delivery_sum_to_decimal_invalid_type(self):
-        assert cdek_services.delivery_sum_to_decimal({"delivery_sum": object()}) == Decimal("0")
+        assert cdek_services.delivery_sum_to_decimal(
+            {"delivery_sum": object()}
+        ) == Decimal("0")
 
 
 @pytest.mark.django_db
 class TestCalculateDeliveryAndTarifflist:
     """Тесты обёрток расчёта доставки / списка тарифов."""
 
-    def test_calculate_delivery_returns_none_when_client_missing(self, settings, monkeypatch):
-        """Если нет настроек CDEK, calculate_delivery возвращает None и не падает."""
+    def test_calculate_delivery_returns_none_when_client_missing(
+        self,
+        settings,
+        monkeypatch
+    ):
+        """Если нет настроек CDEK, calculate_delivery не падает."""
         settings.CDEK_ACCOUNT = ""
         settings.CDEK_SECURE = ""
         result = cdek_services.calculate_delivery(
@@ -56,7 +62,11 @@ class TestCalculateDeliveryAndTarifflist:
         )
         assert result is None
 
-    def test_calculate_delivery_handles_cdek_error(self, settings, monkeypatch):
+    def test_calculate_delivery_handles_cdek_error(
+        self,
+        settings,
+        monkeypatch
+    ):
         """Ошибки CDEK API перехватываются и возвращается None."""
         settings.CDEK_ACCOUNT = "test"
         settings.CDEK_SECURE = "secret"
@@ -69,12 +79,21 @@ class TestCalculateDeliveryAndTarifflist:
         result = cdek_services.calculate_delivery(
             from_city_code=137,
             to_city_code=44,
-            packages=[{"weight": 500, "length": 100, "width": 100, "height": 100}],
+            packages=[{
+                "weight": 500,
+                "length": 100,
+                "width": 100,
+                "height": 100
+            }],
         )
         assert result is None
 
-    def test_calculate_tarifflist_flattens_response_shapes(self, settings, monkeypatch):
-        """calculate_tarifflist корректно извлекает тарифы из разных форматов ответа."""
+    def test_calculate_tarifflist_flattens_response_shapes(
+        self,
+        settings,
+        monkeypatch
+    ):
+        """calculate_tarifflist корректно извлекает тарифы."""
         settings.CDEK_ACCOUNT = "test"
         settings.CDEK_SECURE = "secret"
 
@@ -124,7 +143,11 @@ class TestCitiesSearch:
     def test_search_cities_uses_cached_cities(self, monkeypatch):
         cities = [
             {"code": 1, "city": "Москва", "region": "Московская область"},
-            {"code": 2, "city": "Санкт-Петербург", "region": "Ленинградская область"},
+            {
+                "code": 2,
+                "city": "Санкт-Петербург",
+                "region": "Ленинградская область"
+            },
         ]
 
         monkeypatch.setattr(
@@ -137,4 +160,3 @@ class TestCitiesSearch:
         assert len(results) == 1
         assert results[0]["code"] == 2
         assert "Санкт-Петербург" in results[0]["city"]
-
