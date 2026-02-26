@@ -28,7 +28,8 @@ class CatalogViewsTestCase(TestCase):
         response = self.client.get(reverse("catalog:product_list"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Тестовый товар")
-        self.assertContains(response, "900.00")
+        # Цена сейчас рендерится без десятичных знаков (floatformat:0)
+        self.assertContains(response, "900")
 
     def test_product_list_hides_inactive(self):
         self.product.is_active = False
@@ -43,8 +44,8 @@ class CatalogViewsTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Тестовый товар")
-        self.assertContains(response, "900.00")
-        self.assertContains(response, "1000.00")
+        self.assertContains(response, "900")
+        self.assertContains(response, "1000")
 
     def test_product_detail_404_for_inactive(self):
         self.product.is_active = False
