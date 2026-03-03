@@ -282,7 +282,7 @@ class TestCreateCdekOrder:
         product = _create_product()
         order = Order.objects.create(
             user=user,
-            status=Order.Status.NEW,
+            status=Order.Status.UNPAID,
             delivery_method=Order.DeliveryMethod.CDEK,
             delivery_type=Order.DeliveryType.PICKUP,
             delivery_tariff_code=136,

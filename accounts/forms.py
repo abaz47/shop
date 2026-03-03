@@ -19,6 +19,13 @@ class RegistrationForm(UserCreationForm):
     Форма регистрации нового пользователя с reCAPTCHA.
     """
 
+    phone = forms.CharField(
+        label="Телефон",
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control"}),
+        help_text="Номер телефона для связи по заказам",
+    )
     email = forms.EmailField(
         label="Email",
         required=True,
@@ -49,6 +56,7 @@ class RegistrationForm(UserCreationForm):
         fields = (
             "username",
             "email",
+            "phone",
             "first_name",
             "last_name",
             "password1",
@@ -92,6 +100,14 @@ class RegistrationForm(UserCreationForm):
         user.is_active = False  # Аккаунт неактивен до подтверждения email
         if commit:
             user.save()
+            phone = self.cleaned_data.get("phone", "")
+            try:
+                profile = user.profile
+            except UserProfile.DoesNotExist:
+                profile = UserProfile.objects.create(user=user)
+            if phone:
+                profile.phone = phone
+                profile.save(update_fields=["phone"])
         return user
 
 

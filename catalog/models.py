@@ -52,6 +52,13 @@ class Product(models.Model):
         default=uuid.uuid4,
         editable=False
     )
+    sku = models.CharField(
+        "Артикул",
+        max_length=50,
+        blank=True,
+        db_index=True,
+        help_text="Внутренний артикул товара",
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,

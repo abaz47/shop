@@ -44,6 +44,11 @@
               </div>
               <div class="card-body d-flex flex-column">
                 <h2 class="card-title h6 mb-2 text-truncate" title="{{ product.name }}">{{ product.name }}</h2>
+                {% if product.sku %}
+                <div class="small text-body-secondary mb-1 text-truncate">
+                  Артикул: {{ product.sku }}
+                </div>
+                {% endif %}
                 <div class="mt-auto">
                   {% if product.has_discount %}
                   <span class="text-decoration-line-through text-body-secondary small">{{ product.price|floatformat:0 }} ₽</span>

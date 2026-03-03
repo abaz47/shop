@@ -75,40 +75,17 @@
   </div>
 
   {% if checkout_context %}
-  {# Авторизованный пользователь: карточки Получатель, Доставка, Итого + кнопки #}
+  {# Авторизованный пользователь: доставка, Итого + кнопки (данные получателя берём из профиля) #}
   <form method="post" id="checkout-form" novalidate class="mb-0">
     {% csrf_token %}
     {% if checkout_context.form.non_field_errors %}
       <div class="alert alert-danger">{{ checkout_context.form.non_field_errors }}</div>
     {% endif %}
 
-    <div class="card mb-4">
-      <div class="card-header">
-        <h3 class="h6 mb-0">Получатель</h3>
-      </div>
-      <div class="card-body">
-        <div class="mb-3">
-          <label for="id_recipient_name" class="form-label">{{ checkout_context.form.recipient_name.label }}</label>
-          {{ checkout_context.form.recipient_name }}
-          {% if checkout_context.form.recipient_name.errors %}
-            <div class="text-danger small">{{ checkout_context.form.recipient_name.errors }}</div>
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <label for="id_recipient_phone" class="form-label">{{ checkout_context.form.recipient_phone.label }}</label>
-          {{ checkout_context.form.recipient_phone }}
-          {% if checkout_context.form.recipient_phone.errors %}
-            <div class="text-danger small">{{ checkout_context.form.recipient_phone.errors }}</div>
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <label for="id_recipient_email" class="form-label">{{ checkout_context.form.recipient_email.label }}</label>
-          {{ checkout_context.form.recipient_email }}
-          {% if checkout_context.form.recipient_email.errors %}
-            <div class="text-danger small">{{ checkout_context.form.recipient_email.errors }}</div>
-          {% endif %}
-        </div>
-      </div>
+    <div class="d-none">
+      {{ checkout_context.form.recipient_name }}
+      {{ checkout_context.form.recipient_phone }}
+      {{ checkout_context.form.recipient_email }}
     </div>
 
     <div class="card mb-4">
@@ -240,12 +217,9 @@
   {% else %}
   {# Гость: только корзина и абзац со ссылками #}
   <p class="mt-3 mb-0">
-    Войдите или <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}">зарегистрируйтесь</a>
+    <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Войдите</a>
+    или <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}">зарегистрируйтесь</a>
     для оформления заказа.
-  </p>
-  <p class="mt-1 mb-4">
-    <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Войти</a>
-    или <a href="{% url 'accounts:register' %}?next={{ request.path|urlencode }}">зарегистрироваться</a>.
   </p>
   {% endif %}
 

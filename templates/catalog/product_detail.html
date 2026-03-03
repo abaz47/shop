@@ -66,6 +66,12 @@
         {% endif %}
       </div>
 
+      {% if product.sku %}
+      <p class="text-body-secondary mb-3">
+        Артикул: <span class="fw-semibold">{{ product.sku }}</span>
+      </p>
+      {% endif %}
+
       {% if product.description %}
       <div class="product-description">
         {{ product.description|linebreaks }}
