@@ -23,6 +23,7 @@ class ProductImageInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "sku",
         "category",
         "price_display",
         "discount_display",
@@ -30,19 +31,34 @@ class ProductAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("category", "is_active")
-    search_fields = ("name", "description")
+    search_fields = ("name", "sku", "description")
     list_editable = ("is_active",)
     readonly_fields = ("id", "created_at", "updated_at")
     inlines = [ProductImageInline]
     fieldsets = (
-        (None, {
-            "fields": ("id", "category", "name", "price", "discount_percent")
-        }),
+        (
+            None,
+            {
+                "fields": (
+                    "id",
+                    "sku",
+                    "category",
+                    "name",
+                    "price",
+                    "discount_percent",
+                )
+            },
+        ),
         ("Описание", {"fields": ("description",)}),
         (
             "Габариты и вес",
             {
-                "fields": ("length_mm", "width_mm", "height_mm", "weight_g"),
+                "fields": (
+                    "length_mm",
+                    "width_mm",
+                    "height_mm",
+                    "weight_g",
+                ),
             },
         ),
         ("Публикация", {"fields": ("is_active", "created_at", "updated_at")}),

@@ -11,9 +11,9 @@ class Order(models.Model):
     """Заказ пользователя."""
 
     class Status(models.TextChoices):
-        NEW = "new", "Новый"
-        CONFIRMED = "confirmed", "Подтверждён"
-        IN_DELIVERY = "in_delivery", "В доставке"
+        UNPAID = "new", "Не оплачен"
+        PAID = "confirmed", "Оплачен"
+        IN_DELIVERY = "in_delivery", "Передан в доставку"
         DELIVERED = "delivered", "Доставлен"
         CANCELLED = "cancelled", "Отменён"
 
@@ -36,7 +36,7 @@ class Order(models.Model):
         "Статус",
         max_length=20,
         choices=Status.choices,
-        default=Status.NEW,
+        default=Status.UNPAID,
         db_index=True,
     )
     delivery_method = models.CharField(

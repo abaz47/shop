@@ -2,7 +2,7 @@
 Представления заказов: оформление заказа и список заказов.
 """
 import json
-from decimal import Decimal
+from decimal import Decimal, ROUND_UP
 
 from django.conf import settings
 from django.contrib import messages
@@ -88,6 +88,43 @@ def _tariff_kind_by_name(name: str) -> str | None:
     return None
 
 
+def _adjust_delivery_cost_for_customer(
+    raw_sum: Decimal | int | float | None
+) -> Decimal:
+    """
+    Увеличивает стоимость доставки на 10%
+    и округляет до 10 рублей в большую сторону.
+    """
+    if raw_sum is None:
+        return Decimal("0")
+    try:
+        value = Decimal(str(raw_sum))
+    except Exception:
+        return Decimal("0")
+    if value <= 0:
+        return Decimal("0")
+    increased = (value * Decimal("1.10")).quantize(
+        Decimal("1"), rounding=ROUND_UP
+    )
+    # Округление вверх до ближайших 10 рублей
+    tens = (
+        (increased + Decimal("9")) // Decimal("10")
+    ) * Decimal("10")
+    return tens
+
+
+def _adjust_delivery_period(value):
+    """
+    Прибавляет 1 день к сроку доставки, если значение задано.
+    """
+    if value is None:
+        return None
+    try:
+        return int(value) + 1
+    except (TypeError, ValueError):
+        return None
+
+
 def _filter_tariffs_for_response(raw_tariffs, mode: str, point_type: str):
     """Фильтрует и сортирует тарифы по mode и point_type."""
     allowed = {"office", "pickup"}
@@ -106,15 +143,21 @@ def _filter_tariffs_for_response(raw_tariffs, mode: str, point_type: str):
             continue
         if mode == "door" and kind != "door":
             continue
-        filtered.append({
-            "tariff_code": t.get("tariff_code"),
-            "tariff_name": t.get("tariff_name"),
-            "tariff_description": t.get("tariff_description"),
-            "delivery_mode": t.get("delivery_mode"),
-            "period_min": t.get("period_min"),
-            "period_max": t.get("period_max"),
-            "delivery_sum": t.get("delivery_sum"),
-        })
+        raw_sum = t.get("delivery_sum")
+        adjusted_sum = int(
+            _adjust_delivery_cost_for_customer(raw_sum)
+        ) if raw_sum is not None else 0
+        filtered.append(
+            {
+                "tariff_code": t.get("tariff_code"),
+                "tariff_name": t.get("tariff_name"),
+                "tariff_description": t.get("tariff_description"),
+                "delivery_mode": t.get("delivery_mode"),
+                "period_min": _adjust_delivery_period(t.get("period_min")),
+                "period_max": _adjust_delivery_period(t.get("period_max")),
+                "delivery_sum": adjusted_sum,
+            }
+        )
 
     filtered.sort(key=lambda x: (x.get("delivery_sum") or 0))
     return filtered
@@ -144,16 +187,21 @@ def _process_place_order(request, form, cart, items, products_total):
         )
         return None
 
-    delivery_cost = delivery_sum_to_decimal(result)
+    base_cost = delivery_sum_to_decimal(result)
+    delivery_cost = _adjust_delivery_cost_for_customer(base_cost)
     delivery_type = (
         Order.DeliveryType.COURIER
         if form.cleaned_data.get("delivery_mode") == "door"
         else Order.DeliveryType.PICKUP
     )
 
+    # На этапе оформления считаем заказ не оплаченным.
+    # Статус "Оплачен" должен выставляться логикой оплаты.
+    status = Order.Status.UNPAID
+
     order = Order.objects.create(
         user=request.user,
-        status=Order.Status.NEW,
+        status=status,
         delivery_method=Order.DeliveryMethod.CDEK,
         delivery_type=delivery_type,
         delivery_tariff_code=tariff_code,
@@ -227,9 +275,16 @@ def _get_checkout_context(request, cart, items, products_total):
                     tariff_code=tariff_code,
                 )
                 if result:
-                    delivery_cost = delivery_sum_to_decimal(result)
-                    delivery_period_min = result.get("period_min")
-                    delivery_period_max = result.get("period_max")
+                    base_cost = delivery_sum_to_decimal(result)
+                    delivery_cost = _adjust_delivery_cost_for_customer(
+                        base_cost
+                    )
+                    delivery_period_min = _adjust_delivery_period(
+                        result.get("period_min")
+                    )
+                    delivery_period_max = _adjust_delivery_period(
+                        result.get("period_max")
+                    )
                 else:
                     messages.warning(
                         request,

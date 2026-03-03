@@ -2,7 +2,6 @@
 Тесты для регистрации пользователей и профиля.
 """
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 
 from accounts.forms import RegistrationForm
 from accounts.models import UserProfile
@@ -32,4 +31,3 @@ def test_registration_phone_saved_to_profile(client, db):
     user = form.save()
     profile = UserProfile.objects.get(user=user)
     assert profile.phone == data["phone"]
-

@@ -9,6 +9,13 @@
   --yt-gray: #4a4a4a;
   --yt-gray-light: #6b6b6b;
   --yt-bg-dark: #1e261e;
+
+  /* Подстройка bootstrap-переменных под палитру сайта */
+  --bs-primary: var(--yt-bronze);
+  --bs-primary-rgb: 184, 134, 11;
+  --bs-link-color: var(--yt-olive);
+  --bs-link-hover-color: var(--yt-dark-green);
+  --bs-btn-focus-shadow-rgb: 184, 134, 11;
 }
 
 body {
@@ -26,6 +33,9 @@ main {
   background-color: var(--yt-bg-dark);
   padding: 0.75rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
 }
 
 .header-content {
@@ -644,6 +654,11 @@ footer {
   font-weight: 500;
 }
 
+/* Корзина: подсветка строк в соответствии с палитрой */
+.cart-table.table-hover > tbody > tr:hover > * {
+  background-color: rgba(154, 205, 50, 0.06);
+}
+
 /* Корзина: мобильная вёрстка (карточки без заголовков) */
 @media (max-width: 767.98px) {
   .cart-table-wrap {
@@ -750,4 +765,15 @@ footer {
   .cart-cell-remove .cart-remove-form {
     margin: 0;
   }
+}
+
+/* Варианты доставки CDEK: выбранный тариф в цвет основной кнопки */
+.cdek-tariff-item.btn-primary {
+  background-color: var(--yt-bronze);
+  border-color: var(--yt-bronze);
+  color: #fff;
+}
+
+.cdek-tariff-item.btn-primary .text-body-secondary {
+  color: rgba(255, 255, 255, 0.85) !important;
 }
