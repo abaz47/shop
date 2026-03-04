@@ -47,8 +47,17 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
-        "console": {"class": "logging.StreamHandler"},
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django.request": {
@@ -62,6 +71,11 @@ LOGGING = {
             "propagate": False,
         },
         "accounts.utils": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "tbank": {
             "handlers": ["console"],
             "level": "INFO",
             "propagate": False,

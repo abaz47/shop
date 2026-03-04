@@ -16,6 +16,7 @@ class Order(models.Model):
         IN_DELIVERY = "in_delivery", "Передан в доставку"
         DELIVERED = "delivered", "Доставлен"
         CANCELLED = "cancelled", "Отменён"
+        REFUNDED = "refunded", "Возврат"
 
     class DeliveryMethod(models.TextChoices):
         CDEK = "cdek", "СДЭК"
@@ -112,6 +113,14 @@ class Order(models.Model):
         max_length=50,
         blank=True,
         help_text="При доставке в пункт выдачи",
+    )
+    # Идентификатор платежа T‑Банка, необходим для отмены через /v2/Cancel.
+    # Сохраняется при инициации платежа и при получении уведомления.
+    tbank_payment_id = models.CharField(
+        "PaymentId T‑Банка",
+        max_length=50,
+        blank=True,
+        db_index=True,
     )
     comment = models.TextField("Комментарий к заказу", blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)

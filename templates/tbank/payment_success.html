@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Оплата успешна — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card border-success">
+        <div class="card-header bg-success text-white">
+          <h2 class="h5 mb-0">Оплата успешно выполнена</h2>
+        </div>
+        <div class="card-body">
+          <p class="mb-2">Номер заказа: <strong>#{{ order.pk }}</strong></p>
+          <p class="mb-2">Сумма: <strong>{{ order.total|floatformat:0 }} ₽</strong></p>
+          {% if order.status == order.Status.PAID %}
+            <p class="mb-4 text-body-secondary">
+              Статус заказа: <strong>Оплачен</strong>. Мы приступим к обработке и доставке.
+            </p>
+          {% else %}
+            <p class="mb-4 text-body-secondary">
+              Платёж в обработке. Текущий статус заказа: <strong>{{ order.get_status_display }}</strong>.
+            </p>
+          {% endif %}
+          <a href="{% url 'orders:list' %}" class="btn btn-primary">Мои заказы</a>
+          <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">В каталог</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

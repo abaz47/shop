@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "core",
     "orders",
     "cdek",
+    "tbank",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -155,3 +156,19 @@ CDEK_SENDER_NAME = os.environ.get("CDEK_SENDER_NAME", "")
 CDEK_SENDER_PHONE = os.environ.get("CDEK_SENDER_PHONE", "")
 CDEK_SENDER_COMPANY = os.environ.get("CDEK_SENDER_COMPANY", "")
 YANDEX_MAPS_API_KEY = os.environ.get("YANDEX_MAPS_API_KEY", "")
+
+# T‑Банк (интернет-эквайринг)
+TBANK_TERMINAL_KEY = os.environ.get("TBANK_TERMINAL_KEY", "")
+TBANK_PASSWORD = os.environ.get("TBANK_PASSWORD", "")
+TBANK_API_BASE_URL = os.environ.get(
+    "TBANK_API_BASE_URL",
+    "https://securepay.tinkoff.ru",
+)
+TBANK_TIMEOUT = int(os.environ.get("TBANK_TIMEOUT", "15") or "15")
+# Система налогообложения магазина (для чеков 54-ФЗ).
+# Допустимые значения: osn, usn_income, usn_income_outcome, esn, patent.
+TBANK_TAXATION = os.environ.get("TBANK_TAXATION", "usn_income")
+# Ставка НДС для товаров: none, vat0, vat10, vat20 и т.д.
+TBANK_VAT_RATE = os.environ.get("TBANK_VAT_RATE", "none")
+# Ставка НДС для позиции «Доставка» (обычно та же, что и для товаров).
+TBANK_DELIVERY_VAT_RATE = os.environ.get("TBANK_DELIVERY_VAT_RATE", "none")
