@@ -19,6 +19,8 @@ from cdek.services import (
     delivery_sum_to_decimal,
     search_cities,
 )
+from tbank.client import TbankClient, build_default_urls
+from tbank.utils import build_receipt, make_tbank_order_id
 
 from .forms import CheckoutForm
 from .models import Order, OrderItem
@@ -241,7 +243,42 @@ def _process_place_order(request, form, cart, items, products_total):
             f"его в СДЭК автоматически. Пожалуйста, свяжитесь с нами — "
             f"мы оформим доставку вручную. Итого: {order.total:.0f} ₽.",
         )
-    return redirect("orders:success", order_id=order.pk)
+
+    # Инициация оплаты в T‑Банке и редирект на платёжную форму.
+    # Используем уникальный OrderId (pk + timestamp), так как T‑Банк требует
+    # уникальности OrderId для каждой операции.
+    tbank_order_id = make_tbank_order_id(order.pk)
+    try:
+        urls = build_default_urls(request, str(order.pk))
+        client = TbankClient()
+        result = client.init_payment(
+            order_id=tbank_order_id,
+            amount=order.total,
+            description=f"Оплата заказа #{order.pk}",
+            customer_key=(
+                str(request.user.pk)
+                if request.user.is_authenticated
+                else None
+            ),
+            success_url=urls["success_url"],
+            fail_url=urls["fail_url"],
+            notification_url=urls["notification_url"],
+            extra_data={"order_number": str(order.pk)},
+            receipt=build_receipt(order),
+        )
+    except Exception:
+        messages.error(
+            request,
+            "Заказ сохранён, но не удалось инициировать оплату в T‑Банке. "
+            "Пожалуйста, свяжитесь с нами для завершения заказа.",
+        )
+        return redirect("orders:success", order_id=order.pk)
+
+    if result.payment_id:
+        order.tbank_payment_id = result.payment_id
+        order.save(update_fields=["tbank_payment_id", "updated_at"])
+
+    return redirect(result.payment_url)
 
 
 def _get_checkout_context(request, cart, items, products_total):

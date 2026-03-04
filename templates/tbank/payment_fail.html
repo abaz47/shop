@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Оплата не прошла — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+          <h2 class="h5 mb-0">Оплата не прошла</h2>
+        </div>
+        <div class="card-body">
+          <p class="mb-2">Номер заказа: <strong>#{{ order.pk }}</strong></p>
+          <p class="mb-2">Сумма: <strong>{{ order.total|floatformat:0 }} ₽</strong></p>
+          <p class="mb-4 text-body-secondary">
+            Платёж был отменён или отклонён банком. Статус заказа сейчас:
+            <strong>{{ order.get_status_display }}</strong>.
+          </p>
+          <a href="{% url 'cart:detail' %}" class="btn btn-primary">Повторить оплату</a>
+          <a href="{% url 'orders:list' %}" class="btn btn-outline-secondary">Мои заказы</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

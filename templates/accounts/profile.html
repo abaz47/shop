@@ -55,21 +55,17 @@
                     <th>Дата</th>
                     <th>Статус</th>
                     <th class="text-end">Сумма</th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for order in orders %}
-                    <tr>
+                    <tr role="button"
+                        style="cursor: pointer;"
+                        onclick="window.location.href='{% url 'orders:success' order_id=order.pk %}';">
                       <td>{{ order.pk }}</td>
                       <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
                       <td>{{ order.get_status_display }}</td>
                       <td class="text-end">{{ order.total|floatformat:0 }} ₽</td>
-                      <td>
-                        <a href="{% url 'orders:success' order_id=order.pk %}" class="btn btn-sm btn-outline-primary">
-                          Подробнее
-                        </a>
-                      </td>
                     </tr>
                   {% endfor %}
                 </tbody>
@@ -77,22 +73,24 @@
             </div>
             <div class="d-lg-none">
               {% for order in orders %}
-                <div class="card mb-2">
-                  <div class="card-body py-3">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div>
-                        <strong>Заказ #{{ order.pk }}</strong>
-                        <div class="small text-body-secondary">
-                          {{ order.created_at|date:"d.m.Y H:i" }} · {{ order.get_status_display }}
+                <a href="{% url 'orders:success' order_id=order.pk %}" class="text-decoration-none text-reset">
+                  <div class="card mb-2">
+                    <div class="card-body py-3">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <strong>Заказ #{{ order.pk }}</strong>
+                          <div class="small text-body-secondary">
+                            {{ order.created_at|date:"d.m.Y H:i" }} · {{ order.get_status_display }}
+                          </div>
+                          <div class="mt-1">{{ order.total|floatformat:0 }} ₽</div>
                         </div>
-                        <div class="mt-1">{{ order.total|floatformat:0 }} ₽</div>
+                        <span class="badge bg-secondary align-self-center">
+                          Открыть
+                        </span>
                       </div>
-                      <a href="{% url 'orders:success' order_id=order.pk %}" class="btn btn-sm btn-primary align-self-center">
-                        Подробнее
-                      </a>
                     </div>
                   </div>
-                </div>
+                </a>
               {% endfor %}
             </div>
           {% else %}
