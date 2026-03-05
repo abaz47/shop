@@ -10,6 +10,8 @@ from catalog.models import Product
 from .models import CartItem
 from .utils import get_or_create_cart
 
+MAX_QUANTITY_PER_ITEM = 10
+
 
 @require_http_methods(["GET", "POST"])
 def cart_detail(request):
@@ -17,6 +19,8 @@ def cart_detail(request):
     Единая страница корзины и оформления заказа (/cart).
     Для гостей: корзина и приглашение войти/зарегистрироваться.
     Для авторизованных с непустой корзиной: корзина и форма оформления.
+    Неактивные товары удаляются из корзины; их названия передаются в шаблон
+    для показа модального окна.
     """
     cart = get_or_create_cart(request)
     items = list(
@@ -24,6 +28,18 @@ def cart_detail(request):
         .prefetch_related("product__images")
         .order_by("id")
     )
+
+    removed_product_names = []
+    inactive_items = [it for it in items if not it.product.is_active]
+    if inactive_items:
+        for it in inactive_items:
+            removed_product_names.append(it.product.name)
+            it.delete()
+        items = list(
+            cart.items.select_related("product")
+            .prefetch_related("product__images")
+            .order_by("id")
+        )
 
     checkout_context = None
     if request.user.is_authenticated and items:
@@ -42,6 +58,7 @@ def cart_detail(request):
             "cart": cart,
             "items": items,
             "checkout_context": checkout_context,
+            "removed_product_names": removed_product_names,
         },
     )
 
@@ -56,6 +73,7 @@ def cart_add(request, product_id):
     quantity = int(request.POST.get("quantity", 1))
     if quantity < 1:
         quantity = 1
+    quantity = min(quantity, MAX_QUANTITY_PER_ITEM)
 
     item, created = CartItem.objects.get_or_create(
         cart=cart,
@@ -63,7 +81,10 @@ def cart_add(request, product_id):
         defaults={"quantity": quantity},
     )
     if not created:
-        item.quantity += quantity
+        item.quantity = min(
+            item.quantity + quantity,
+            MAX_QUANTITY_PER_ITEM,
+        )
         item.save(update_fields=["quantity"])
 
     redirect_url = request.POST.get(
@@ -87,7 +108,7 @@ def cart_update(request, product_id):
     if quantity < 1:
         item.delete()
     else:
-        item.quantity = quantity
+        item.quantity = min(quantity, MAX_QUANTITY_PER_ITEM)
         item.save(update_fields=["quantity"])
     return redirect("cart:detail")
 

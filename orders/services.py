@@ -207,6 +207,39 @@ def create_cdek_order(order: Order) -> str | None:
     return cdek_uuid
 
 
+def _tracking_from_dict(obj: dict) -> str | None:
+    """Извлекает трек-номер из словаря (cdek_number или delivery_number)."""
+    if not isinstance(obj, dict):
+        return None
+    value = (
+        obj.get("cdek_number") or obj.get("delivery_number") or ""
+    ).strip()
+    return value or None
+
+
+def _tracking_from_related_entities(data: dict, entity: dict) -> str | None:
+    """Ищет трек-номер в related_entities ответа СДЭК."""
+    related = (
+        data.get("related_entities")
+        or entity.get("related_entities")
+        or []
+    )
+    for rel in related:
+        tracking = _tracking_from_dict(rel) if isinstance(rel, dict) else None
+        if tracking:
+            return tracking
+    return None
+
+
+def _tracking_from_delivery_detail(entity: dict) -> str | None:
+    """Ищет трек-номер в delivery_detail ответа СДЭК."""
+    delivery_detail = entity.get("delivery_detail") or []
+    if not isinstance(delivery_detail, list) or not delivery_detail:
+        return None
+    first = delivery_detail[0]
+    return _tracking_from_dict(first) if isinstance(first, dict) else None
+
+
 def get_cdek_tracking_number(order: "Order") -> str | None:
     """
     Возвращает трек-номер СДЭК для заказа по cdek_order_uuid или None.
@@ -223,29 +256,9 @@ def get_cdek_tracking_number(order: "Order") -> str | None:
         data = client.get_order(uuid)
     except CdekAPIError:
         return None
-    # В ответе СДЭК трек-номер в entity.cdek_number.
-    # Иногда в related_entities или в delivery_detail — проверяем по очереди.
     entity = data.get("entity") or data
-    tracking = (entity.get("cdek_number") or "").strip()
-    if tracking:
-        return tracking
-    for rel in (
-        data.get("related_entities")
-        or entity.get("related_entities") or []
-    ):
-        if isinstance(rel, dict):
-            tracking = (rel.get("cdek_number") or "").strip()
-            if tracking:
-                return tracking
-    delivery_detail = entity.get("delivery_detail") or []
-    if isinstance(delivery_detail, list) and delivery_detail:
-        first = (
-            delivery_detail[0] if isinstance(delivery_detail[0], dict)
-            else {}
-        )
-        tracking = (
-            first.get("cdek_number") or first.get("delivery_number") or ""
-        ).strip()
-        if tracking:
-            return tracking
-    return None
+    return (
+        _tracking_from_dict(entity)
+        or _tracking_from_related_entities(data, entity)
+        or _tracking_from_delivery_detail(entity)
+    )

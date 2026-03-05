@@ -7,14 +7,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import (
     LoginView,
     LogoutView,
+    PasswordChangeDoneView,
+    PasswordChangeView,
     PasswordResetView as DjangoPasswordResetView,
 )
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import CreateView, UpdateView
 
 from .forms import (
+    CustomPasswordChangeForm,
     CustomPasswordResetForm,
     LoginForm,
     ProfileEditForm,
@@ -196,6 +200,22 @@ class ProfileEditView(UpdateView):
             "Профиль успешно обновлён."
         )
         return super().form_valid(form)
+
+
+class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    """Смена пароля (для авторизованного пользователя)."""
+
+    form_class = CustomPasswordChangeForm
+    template_name = "accounts/password_change.html"
+    success_url = reverse_lazy("accounts:password_change_done")
+    login_url = reverse_lazy("accounts:login")
+
+
+class CustomPasswordChangeDoneView(LoginRequiredMixin, PasswordChangeDoneView):
+    """Страница после успешной смены пароля."""
+
+    template_name = "accounts/password_change_done.html"
+    login_url = reverse_lazy("accounts:login")
 
 
 class PasswordResetView(DjangoPasswordResetView):

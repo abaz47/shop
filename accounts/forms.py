@@ -4,6 +4,7 @@
 from django import forms
 from django.contrib.auth.forms import (
     AuthenticationForm,
+    PasswordChangeForm,
     PasswordResetForm,
     UserCreationForm,
 )
@@ -158,6 +159,15 @@ class CustomPasswordResetForm(PasswordResetForm):
             attrs={"class": "form-control", "autocomplete": "email"}
         ),
     )
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """Форма смены пароля с Bootstrap-классами полей."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault("class", "form-control")
 
 
 class ProfileEditForm(forms.ModelForm):

@@ -2,9 +2,9 @@
 URL-маршруты для приложения accounts.
 """
 from django.contrib.auth.views import (
-    PasswordResetDoneView,
-    PasswordResetConfirmView,
     PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
 )
 from django.urls import path
 
@@ -23,6 +23,16 @@ urlpatterns = [
         "profile/edit/",
         views.ProfileEditView.as_view(),
         name="profile_edit"
+    ),
+    path(
+        "password-change/",
+        views.CustomPasswordChangeView.as_view(),
+        name="password_change",
+    ),
+    path(
+        "password-change/done/",
+        views.CustomPasswordChangeDoneView.as_view(),
+        name="password_change_done",
     ),
     # Восстановление пароля
     path(
