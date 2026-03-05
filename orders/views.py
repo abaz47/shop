@@ -24,7 +24,7 @@ from tbank.utils import build_receipt, make_tbank_order_id
 
 from .forms import CheckoutForm
 from .models import Order, OrderItem
-from .services import create_cdek_order
+from .services import create_cdek_order, get_cdek_tracking_number
 
 
 def _parse_tariffs_request_payload(request):
@@ -378,18 +378,35 @@ def checkout_view(request):
 
 @login_required
 def checkout_success(request, order_id):
-    """Страница успешного оформления заказа."""
-    order = Order.objects.filter(
-        user=request.user,
-        pk=order_id,
-    ).first()
+    """
+    Страница заказа: детали заказа, сообщение об оплате/неоплате,
+    трек-номер СДЭК при наличии.
+    """
+    order = (
+        Order.objects.filter(user=request.user, pk=order_id)
+        .prefetch_related("items__product__images")
+        .first()
+    )
     if not order:
         messages.warning(request, "Заказ не найден.")
-        return redirect("orders:list")
+        return redirect("accounts:profile")
+    payment_result = request.GET.get("payment")  # success | fail
+    # Трек-номер СДЭК показываем только после передачи заказа в доставку.
+    cdek_tracking_number = None
+    if (
+        order.status in (Order.Status.IN_DELIVERY, Order.Status.DELIVERED)
+        and order.delivery_method == Order.DeliveryMethod.CDEK
+        and order.cdek_order_uuid
+    ):
+        cdek_tracking_number = get_cdek_tracking_number(order)
     return render(
         request,
         "orders/checkout_success.html",
-        {"order": order},
+        {
+            "order": order,
+            "payment_result": payment_result,
+            "cdek_tracking_number": cdek_tracking_number,
+        },
     )
 
 
@@ -447,11 +464,32 @@ def checkout_tariffs(request):
 
 
 @login_required
-def order_list(request):
-    """Список заказов пользователя."""
-    orders = Order.objects.filter(user=request.user).order_by("-created_at")
-    return render(
-        request,
-        "orders/order_list.html",
-        {"orders": orders},
-    )
+def order_list_redirect(request):
+    """Редирект на личный кабинет (список заказов отображается там)."""
+    return redirect("accounts:profile")
+
+
+@login_required
+@require_http_methods(["POST"])
+def repeat_order_view(request, order_id):
+    """Повторить заказ:
+    добавить товары заказа в корзину и перейти в корзину.
+    """
+    order = Order.objects.filter(
+        user=request.user,
+        pk=order_id,
+    ).first()
+    if not order:
+        messages.warning(request, "Заказ не найден.")
+        return redirect("accounts:profile")
+    cart = get_or_create_cart(request)
+    for item in order.items.select_related("product"):
+        cart_item, created = cart.items.get_or_create(
+            product=item.product,
+            defaults={"quantity": item.quantity},
+        )
+        if not created:
+            cart_item.quantity += item.quantity
+            cart_item.save(update_fields=["quantity"])
+    messages.success(request, "Товары заказа добавлены в корзину.")
+    return redirect("cart:detail")

@@ -206,9 +206,9 @@
     <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">
       Продолжить покупки
     </a>
-    <form action="{% url 'cart:clear' %}" method="post" class="ms-md-auto">
+    <form action="{% url 'cart:clear' %}" method="post" class="ms-md-auto" id="cart-clear-form">
       {% csrf_token %}
-      <button type="submit" class="btn btn-outline-danger">
+      <button type="button" class="btn btn-outline-danger cart-clear-btn">
         Очистить корзину
       </button>
     </form>
@@ -248,6 +248,50 @@
     </div>
   </div>
 </div>
+{# Модальное окно подтверждения очистки корзины #}
+<div class="modal fade" id="cartClearModal" tabindex="-1" aria-labelledby="cartClearModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5" id="cartClearModalLabel">Очистить корзину?</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Все товары будут удалены из корзины.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-danger" id="cartClearModalConfirm">Очистить</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# Модальное окно: неактивные товары удалены из корзины #}
+{% if removed_product_names %}
+<div class="modal fade" id="cartInactiveModal" tabindex="-1" aria-labelledby="cartInactiveModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title h5" id="cartInactiveModalLabel">Товары удалены из корзины</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0" id="cartInactiveModalBody">
+          {% if removed_product_names|length == 1 %}
+            Товар «{{ removed_product_names.0 }}» закончился и удалён из корзины.
+          {% else %}
+            Товары «{{ removed_product_names|join:"», «" }}» закончились и удалены из корзины.
+          {% endif %}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Понятно</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endif %}
 
 {% if items %}
@@ -260,8 +304,10 @@
     var plusBtn = form.querySelector('.cart-qty-plus');
     if (!input || !display) return;
 
+    var MAX_QTY = 10;
     function submitQty(q) {
       q = parseInt(q, 10) || 0;
+      q = Math.max(0, Math.min(MAX_QTY, q));
       input.value = q;
       display.textContent = q;
       form.submit();
@@ -275,7 +321,7 @@
     }
     if (plusBtn) {
       plusBtn.addEventListener('click', function() {
-        var q = parseInt(input.value, 10) + 1;
+        var q = Math.min(MAX_QTY, parseInt(input.value, 10) + 1);
         submitQty(q);
       });
     }
@@ -309,6 +355,37 @@
       var modal = bootstrap.Modal.getInstance(removeModalEl);
       if (modal) modal.hide();
     });
+  }
+
+  var clearModalEl = document.getElementById('cartClearModal');
+  var clearConfirmBtn = document.getElementById('cartClearModalConfirm');
+  var clearForm = document.getElementById('cart-clear-form');
+  document.querySelectorAll('.cart-clear-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (clearModalEl && window.bootstrap) {
+        var modal = new bootstrap.Modal(clearModalEl);
+        modal.show();
+      }
+    });
+  });
+  if (clearConfirmBtn && clearForm) {
+    clearConfirmBtn.addEventListener('click', function() {
+      clearForm.submit();
+      var modal = bootstrap.Modal.getInstance(clearModalEl);
+      if (modal) modal.hide();
+    });
+  }
+})();
+</script>
+{% endif %}
+
+{% if removed_product_names %}
+<script>
+(function() {
+  var inactiveModalEl = document.getElementById('cartInactiveModal');
+  if (inactiveModalEl && window.bootstrap) {
+    var inactiveModal = new bootstrap.Modal(inactiveModalEl);
+    inactiveModal.show();
   }
 })();
 </script>

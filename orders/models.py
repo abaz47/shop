@@ -5,6 +5,47 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
+
+
+def _unpaid_expiry_hours():
+    """Число часов, после которых неоплаченный заказ считается просроченным."""
+    return 6
+
+
+class OrderQuerySet(models.QuerySet):
+    """QuerySet заказов с фильтром видимости в личном кабинете."""
+
+    def visible_in_cabinet(self):
+        """
+        Заказы, которые показываются в личном кабинете.
+        Неоплаченные старше 6 часов исключаются.
+        """
+        from datetime import timedelta
+        threshold = timezone.now() - timedelta(hours=_unpaid_expiry_hours())
+        return self.exclude(
+            status=self.model.Status.UNPAID,
+            created_at__lt=threshold,
+        )
+
+
+class OrderManager(models.Manager):
+    """Менеджер заказов с поддержкой visible_in_cabinet."""
+
+    def get_queryset(self):
+        return OrderQuerySet(self.model, using=self._db)
+
+    def visible_in_cabinet(self):
+        return self.get_queryset().visible_in_cabinet()
+
+    def unpaid_expired(self):
+        """Неоплаченные заказы старше 6 часов (для удаления)."""
+        from datetime import timedelta
+        threshold = timezone.now() - timedelta(hours=_unpaid_expiry_hours())
+        return self.filter(
+            status=self.model.Status.UNPAID,
+            created_at__lt=threshold,
+        )
 
 
 class Order(models.Model):
@@ -125,6 +166,8 @@ class Order(models.Model):
     comment = models.TextField("Комментарий к заказу", blank=True)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
+
+    objects = OrderManager()
 
     class Meta:
         ordering = ["-created_at"]

@@ -68,6 +68,23 @@ services:
       - "9000"
     restart: always
 
+  cleanup-orders:
+    image: abaz47/shop-web:latest
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-shop}:${POSTGRES_PASSWORD:-shop}@db:5432/${POSTGRES_DB:-shop_db}
+      DJANGO_SETTINGS_MODULE: config.settings.production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "while true; do
+        python manage.py cleanup_unpaid_orders;
+        sleep 43200;
+      done"
+    restart: always
+
   certbot:
     image: certbot/certbot
     volumes:

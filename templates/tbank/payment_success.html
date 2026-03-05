@@ -22,7 +22,7 @@
               Платёж в обработке. Текущий статус заказа: <strong>{{ order.get_status_display }}</strong>.
             </p>
           {% endif %}
-          <a href="{% url 'orders:list' %}" class="btn btn-primary">Мои заказы</a>
+          <a href="{% url 'accounts:profile' %}" class="btn btn-primary">Личный кабинет</a>
           <a href="{% url 'catalog:product_list' %}" class="btn btn-outline-secondary">В каталог</a>
         </div>
       </div>
