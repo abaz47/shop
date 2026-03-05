@@ -84,6 +84,27 @@ def _cancel_orders_action(modeladmin, request, queryset):
 _cancel_orders_action.short_description = "Отменить платёж в T‑Банке (Возврат)"
 
 
+def _set_status_in_delivery_action(modeladmin, request, queryset):
+    """Массовое действие:
+    перевести выбранные заказы в статус «Передан в доставку».
+    """
+    updated = 0
+    for order in queryset:
+        order.status = Order.Status.IN_DELIVERY
+        order.save(update_fields=["status", "updated_at"])
+        updated += 1
+    modeladmin.message_user(
+        request,
+        f"Статус «Передан в доставку» установлен для {updated} заказ(ов).",
+        level=messages.SUCCESS,
+    )
+
+
+_set_status_in_delivery_action.short_description = (
+    "Сменить статус на «Передан в доставку»"
+)
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
@@ -105,7 +126,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
     readonly_fields = ("created_at", "updated_at", "tbank_payment_id")
     inlines = [OrderItemInline]
-    actions = [_cancel_orders_action]
+    actions = [_cancel_orders_action, _set_status_in_delivery_action]
     fieldsets = (
         (None, {
             "fields": ("user", "status", "delivery_method", "delivery_type")

@@ -20,7 +20,9 @@
         <tbody>
           {% for order in orders %}
             <tr>
-              <td>{{ order.pk }}</td>
+              <td>
+                <a href="{% url 'orders:success' order_id=order.pk %}">{{ order.pk }}</a>
+              </td>
               <td>{{ order.created_at|date:"d.m.Y H:i" }}</td>
               <td>{{ order.get_status_display }}</td>
               <td class="text-end">{{ order.total|floatformat:0 }} ₽</td>

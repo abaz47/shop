@@ -151,7 +151,11 @@ def profile_view(request):
     """Личный кабинет: данные профиля и список заказов."""
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     from orders.models import Order
-    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+    orders = (
+        Order.objects.filter(user=request.user)
+        .visible_in_cabinet()
+        .order_by("-created_at")
+    )
     return render(
         request,
         "accounts/profile.html",

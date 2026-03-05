@@ -239,14 +239,14 @@ class TbankClient:
 def build_default_urls(request, order_id: str) -> dict[str, str]:
     """
     Строит SuccessURL/FailURL/NotificationURL для указанного заказа.
+    После оплаты пользователь попадает на страницу заказа с параметром
+    payment=success или payment=fail.
     """
-    # Абсолютные URL на основе текущего хоста.
-    success_url = request.build_absolute_uri(
-        reverse("tbank:success", kwargs={"order_id": order_id})
+    base = request.build_absolute_uri(
+        reverse("orders:success", kwargs={"order_id": order_id})
     )
-    fail_url = request.build_absolute_uri(
-        reverse("tbank:fail", kwargs={"order_id": order_id})
-    )
+    success_url = f"{base}?payment=success"
+    fail_url = f"{base}?payment=fail"
     notification_url = request.build_absolute_uri(
         reverse("tbank:notification")
     )

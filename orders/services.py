@@ -205,3 +205,47 @@ def create_cdek_order(order: Order) -> str | None:
             "Order %s registered in CDEK, uuid=%s", order.pk, cdek_uuid
         )
     return cdek_uuid
+
+
+def get_cdek_tracking_number(order: "Order") -> str | None:
+    """
+    Возвращает трек-номер СДЭК для заказа по cdek_order_uuid или None.
+    """
+    from cdek.services import get_client
+
+    uuid = (order.cdek_order_uuid or "").strip()
+    if not uuid:
+        return None
+    client = get_client()
+    if not client:
+        return None
+    try:
+        data = client.get_order(uuid)
+    except CdekAPIError:
+        return None
+    # В ответе СДЭК трек-номер в entity.cdek_number.
+    # Иногда в related_entities или в delivery_detail — проверяем по очереди.
+    entity = data.get("entity") or data
+    tracking = (entity.get("cdek_number") or "").strip()
+    if tracking:
+        return tracking
+    for rel in (
+        data.get("related_entities")
+        or entity.get("related_entities") or []
+    ):
+        if isinstance(rel, dict):
+            tracking = (rel.get("cdek_number") or "").strip()
+            if tracking:
+                return tracking
+    delivery_detail = entity.get("delivery_detail") or []
+    if isinstance(delivery_detail, list) and delivery_detail:
+        first = (
+            delivery_detail[0] if isinstance(delivery_detail[0], dict)
+            else {}
+        )
+        tracking = (
+            first.get("cdek_number") or first.get("delivery_number") or ""
+        ).strip()
+        if tracking:
+            return tracking
+    return None

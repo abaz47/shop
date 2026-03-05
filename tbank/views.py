@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -81,30 +81,23 @@ def start_payment_view(request: HttpRequest, order_id: int) -> HttpResponse:
 @require_GET
 def payment_success_view(request: HttpRequest, order_id: int) -> HttpResponse:
     """
-    Страница успешно завершённой оплаты.
-
-    Фактическое изменение статуса заказа выполняется по уведомлению
-    NotificationURL; здесь только показываем состояние заказа.
+    Редирект на страницу заказа с параметром payment=success.
+    Оставлен для обратной совместимости старых ссылок.
     """
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    return render(
-        request,
-        "tbank/payment_success.html",
-        {"order": order},
-    )
+    from django.urls import reverse
+    url = reverse("orders:success", kwargs={"order_id": order_id})
+    return redirect(f"{url}?payment=success")
 
 
 @require_GET
 def payment_fail_view(request: HttpRequest, order_id: int) -> HttpResponse:
     """
-    Страница неуспешной оплаты.
+    Редирект на страницу заказа с параметром payment=fail.
+    Оставлен для обратной совместимости старых ссылок.
     """
-    order = get_object_or_404(Order, pk=order_id, user=request.user)
-    return render(
-        request,
-        "tbank/payment_fail.html",
-        {"order": order},
-    )
+    from django.urls import reverse
+    url = reverse("orders:success", kwargs={"order_id": order_id})
+    return redirect(f"{url}?payment=fail")
 
 
 def _parse_notification_body(request: HttpRequest) -> dict[str, Any] | None:

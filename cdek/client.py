@@ -323,6 +323,16 @@ class CdekClient:
         )
         return self._request("POST", "/v2/orders", json=body)
 
+    def get_order(self, uuid: str) -> dict[str, Any]:
+        """
+        Получение заказа по UUID (GET /v2/orders/{uuid}).
+        В ответе может быть entity с полем cdek_number (трек-номер СДЭК).
+        """
+        uuid = (uuid or "").strip()
+        if not uuid:
+            raise CdekAPIError("UUID заказа СДЭК не указан")
+        return self._request("GET", f"/v2/orders/{uuid}")
+
     def get_cities(
         self,
         *,
