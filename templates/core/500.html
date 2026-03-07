@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ошибка сервера — {{ site_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <h1 class="display-4">500</h1>
+  <p class="lead">Ошибка сервера</p>
+  <p class="text-body-secondary">Произошла внутренняя ошибка. Мы уже работаем над её устранением.</p>
+  <a href="{% url 'catalog:product_list' %}" class="btn btn-primary">Перейти в каталог</a>
+</div>
+{% endblock %}

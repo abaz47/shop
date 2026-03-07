@@ -152,6 +152,11 @@ def _apply_notification(
             order.status = Order.Status.PAID
             update_fields.append("status")
         order.save(update_fields=update_fields)
+        if not order.email_paid_sent:
+            from orders.emails import send_order_paid_email
+            send_order_paid_email(order)
+            order.email_paid_sent = True
+            order.save(update_fields=["email_paid_sent"])
     elif order.status == Order.Status.UNPAID:
         order.save(update_fields=update_fields)
 

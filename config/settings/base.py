@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.sitemaps",
     "django_recaptcha",
 ]
 
@@ -172,3 +173,28 @@ TBANK_TAXATION = os.environ.get("TBANK_TAXATION", "usn_income")
 TBANK_VAT_RATE = os.environ.get("TBANK_VAT_RATE", "none")
 # Ставка НДС для позиции «Доставка» (обычно та же, что и для товаров).
 TBANK_DELIVERY_VAT_RATE = os.environ.get("TBANK_DELIVERY_VAT_RATE", "none")
+
+# Email для копии писем о заказах (при оформлении заказа).
+ORDER_NOTIFICATION_EMAIL = os.environ.get(
+    "ORDER_NOTIFICATION_EMAIL",
+    "shop@yarmettaktik.shop",
+).strip() or None
+
+# Кэш: Redis при заданном REDIS_URL, иначе локальная память
+_redis_url = os.environ.get("REDIS_URL", "").strip()
+if _redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _redis_url,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }

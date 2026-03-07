@@ -164,6 +164,14 @@ class Order(models.Model):
         db_index=True,
     )
     comment = models.TextField("Комментарий к заказу", blank=True)
+    email_paid_sent = models.BooleanField(
+        "Письмо об оплате отправлено",
+        default=False,
+    )
+    email_in_delivery_sent = models.BooleanField(
+        "Письмо о передаче в доставку отправлено",
+        default=False,
+    )
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 

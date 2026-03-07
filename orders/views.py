@@ -393,6 +393,17 @@ def checkout_success(request, order_id):
         messages.warning(request, "Заказ не найден.")
         return redirect("accounts:profile")
     payment_result = request.GET.get("payment")  # success | fail
+
+    # Письма после первой попытки оплаты (редирект с T‑Банка)
+    if payment_result == "fail":
+        from orders.emails import send_order_payment_failed_email
+        send_order_payment_failed_email(order)
+    elif payment_result == "success" and not order.email_paid_sent:
+        from orders.emails import send_order_paid_email
+        send_order_paid_email(order)
+        order.email_paid_sent = True
+        order.save(update_fields=["email_paid_sent"])
+
     # Трек-номер СДЭК показываем только после передачи заказа в доставку.
     cdek_tracking_number = None
     if (

@@ -102,7 +102,7 @@
 
       {% if variants|length > 1 %}
       <div class="mb-3">
-        <label class="form-label fw-semibold">Цвет / исполнение</label>
+        <label class="form-label fw-semibold">Цвет</label>
         <div class="d-flex flex-wrap gap-2" role="group" aria-label="Выбор варианта">
           {% for v in variants %}
           <a href="?variant={{ v.pk }}" class="btn {% if v.pk == selected_variant.pk %}btn-primary{% else %}btn-outline-secondary{% endif %} btn-sm"
