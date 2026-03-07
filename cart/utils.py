@@ -34,8 +34,8 @@ def merge_carts(session_cart, user_cart):
     if session_cart.pk == user_cart.pk:
         return
 
-    for item in session_cart.items.select_related("product"):
-        user_item = user_cart.items.filter(product=item.product).first()
+    for item in session_cart.items.select_related("variant"):
+        user_item = user_cart.items.filter(variant=item.variant).first()
         if user_item:
             user_item.quantity += item.quantity
             user_item.save()

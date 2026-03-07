@@ -142,8 +142,8 @@
                 {% for item in items %}
                   <tr>
                     <td class="ps-0">
-                      <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none text-dark">
-                        {{ item.product.name }}
+                      <a href="{{ item.variant.product.get_absolute_url }}" class="text-decoration-none text-dark">
+                        {{ item.variant.product.name }}{% if item.variant.sku %} ({{ item.variant.sku }}){% endif %}
                       </a>
                       <span class="text-body-secondary">× {{ item.quantity }}</span>
                     </td>

@@ -93,10 +93,10 @@
         {% for item in order.items.all %}
           <tr>
             <td>
-              <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none">
-                {% with main_image=item.product.get_main_image %}
+              <a href="{{ item.variant.product.get_absolute_url }}" class="text-decoration-none">
+                {% with main_image=item.variant.get_main_image %}
                   {% if main_image %}
-                    <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail" style="max-height: 60px; width: auto;">
+                    <img src="{{ main_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-thumbnail" style="max-height: 60px; width: auto;">
                   {% else %}
                     <div class="bg-light rounded d-flex align-items-center justify-content-center text-body-secondary" style="width: 60px; height: 60px;">
                       <span class="small">Нет фото</span>
@@ -106,7 +106,10 @@
               </a>
             </td>
             <td>
-              <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-dark text-decoration-none fw-medium">{{ item.product.name }}</a>
+              <a href="{{ item.variant.product.get_absolute_url }}" class="text-dark text-decoration-none fw-medium">{{ item.variant.product.name }}</a>
+              {% if item.variant.sku %}
+              <div class="small text-body-secondary">Артикул: {{ item.variant.sku }}</div>
+              {% endif %}
             </td>
             <td class="text-center">{{ item.quantity }}</td>
             <td class="text-end">{{ item.price|floatformat:0 }} ₽</td>

@@ -1,7 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{{ product.name }} — {{ site_name }}{% endblock %}
+{% block title %}{{ product.name }}{% if selected_variant.color %} — {{ selected_variant.color }}{% endif %} — {{ site_name }}{% endblock %}
+
+{% block extra_head %}
+{% if product and variants %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  "description": "{{ product.description|truncatewords:50|escapejs }}",
+  "url": "{{ request.build_absolute_uri|escapejs }}",
+  {% if schema_image_url %}
+  "image": "{{ schema_image_url|escapejs }}",
+  {% endif %}
+  "brand": {
+    "@type": "Brand",
+    "name": "{{ site_name|escapejs }}"
+  },
+  "offers": [
+    {% for v in variants %}{
+      "@type": "Offer",
+      "url": "{{ request.build_absolute_uri|escapejs }}",
+      "priceCurrency": "RUB",
+      "price": "{{ v.discounted_price|floatformat:2 }}",
+      "availability": "https://schema.org/InStock",
+      "sku": "{{ v.sku|escapejs }}"
+      {% if v.color %}, "name": "{{ v.color|escapejs }}"{% endif %}
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -21,23 +54,23 @@
 
   <div class="row">
     <div class="col-lg-6 mb-4">
-      {% if product.images.all %}
+      {% if selected_variant and selected_variant.images.all %}
       <div id="productCarousel" class="carousel slide shadow-sm" data-bs-ride="carousel">
         <div class="carousel-indicators">
-          {% for img in product.images.all %}
+          {% for img in selected_variant.images.all %}
           <button type="button" data-bs-target="#productCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
             {% if forloop.first %}class="active" aria-current="true"{% endif %}
             aria-label="Фото {{ forloop.counter }}"></button>
           {% endfor %}
         </div>
         <div class="carousel-inner ratio ratio-1x1 bg-light">
-          {% for img in product.images.all %}
+          {% for img in selected_variant.images.all %}
           <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ img.image.url }}" class="d-block w-100 object-fit-cover" alt="{{ product.name }} — фото {{ forloop.counter }}">
+            <img src="{{ img.image.url }}" class="d-block w-100 object-fit-cover" alt="{{ product.name }}{% if selected_variant.color %} — {{ selected_variant.color }}{% endif %}, фото {{ forloop.counter }}">
           </div>
           {% endfor %}
         </div>
-        {% if product.images.count > 1 %}
+        {% if selected_variant.images.count > 1 %}
         <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
           <span class="carousel-control-prev-icon" aria-hidden="true"></span>
           <span class="visually-hidden">Предыдущее</span>
@@ -56,19 +89,34 @@
     </div>
 
     <div class="col-lg-6">
+      {% if selected_variant %}
       <div class="mb-4">
-        {% if product.has_discount %}
-        <span class="text-decoration-line-through text-body-secondary me-2">{{ product.price|floatformat:0 }} ₽</span>
-        <span class="fs-4 text-danger fw-bold">{{ product.discounted_price|floatformat:0 }} ₽</span>
-        <span class="badge bg-danger ms-2">−{{ product.discount_percent }}%</span>
+        {% if selected_variant.has_discount %}
+        <span class="text-decoration-line-through text-body-secondary me-2">{{ selected_variant.price|floatformat:0 }} ₽</span>
+        <span class="fs-4 text-danger fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
+        <span class="badge bg-danger ms-2">−{{ selected_variant.discount_percent }}%</span>
         {% else %}
-        <span class="fs-4 fw-bold">{{ product.price|floatformat:0 }} ₽</span>
+        <span class="fs-4 fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
         {% endif %}
       </div>
 
-      {% if product.sku %}
+      {% if variants|length > 1 %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Цвет / исполнение</label>
+        <div class="d-flex flex-wrap gap-2" role="group" aria-label="Выбор варианта">
+          {% for v in variants %}
+          <a href="?variant={{ v.pk }}" class="btn {% if v.pk == selected_variant.pk %}btn-primary{% else %}btn-outline-secondary{% endif %} btn-sm"
+             data-variant-id="{{ v.pk }}">
+            {{ v.color|default:"Без названия" }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if selected_variant.sku %}
       <p class="text-body-secondary mb-3">
-        Артикул: <span class="fw-semibold">{{ product.sku }}</span>
+        Артикул: <span class="fw-semibold">{{ selected_variant.sku }}</span>
       </p>
       {% endif %}
 
@@ -80,12 +128,15 @@
       <p class="text-body-secondary">Описание отсутствует.</p>
       {% endif %}
 
-      <form action="{% url 'cart:add' product.pk %}" method="post" class="mt-4">
+      <form action="{% url 'cart:add' selected_variant.pk %}" method="post" class="mt-4">
         {% csrf_token %}
         <input type="hidden" name="quantity" value="1">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit" class="btn btn-primary">В корзину</button>
       </form>
+      {% else %}
+      <p class="text-body-secondary">Нет доступных вариантов товара.</p>
+      {% endif %}
     </div>
   </div>
 </div>

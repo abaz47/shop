@@ -5,7 +5,7 @@ from .models import Cart, CartItem
 class CartItemInline(admin.TabularInline):
     model = CartItem
     extra = 0
-    raw_id_fields = ("product",)
+    raw_id_fields = ("variant",)
 
 
 @admin.register(Cart)
@@ -18,6 +18,6 @@ class CartAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ("cart", "product", "quantity")
+    list_display = ("cart", "variant", "quantity")
     list_filter = ("cart",)
-    raw_id_fields = ("cart", "product")
+    raw_id_fields = ("cart", "variant")

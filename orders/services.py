@@ -31,8 +31,8 @@ def _build_packages_with_items(order: Order) -> list[dict]:
     """
     packages = []
     pkg_num = 1
-    for item in order.items.select_related("product"):
-        product = item.product
+    for item in order.items.select_related("variant__product"):
+        product = item.variant.product
         weight_g = product.weight_g or DEFAULT_WEIGHT_G
         length_mm = product.length_mm or DEFAULT_LENGTH_MM
         width_mm = product.width_mm or DEFAULT_WIDTH_MM
@@ -43,11 +43,13 @@ def _build_packages_with_items(order: Order) -> list[dict]:
         width = max(1, round(width_mm / 10))
         height = max(1, round(height_mm / 10))
 
+        # Объявленная стоимость для СДЭК — половина цены товара
+        declared_cost = float(item.price) / 2
         item_payload = {
             "name": product.name[:255],
-            "ware_key": str(product.pk)[:20],
+            "ware_key": (item.variant.sku or str(product.pk))[:20],
             "payment": {"value": 0},
-            "cost": float(item.price),
+            "cost": round(declared_cost, 2),
             "weight": weight,
             "amount": 1,
         }

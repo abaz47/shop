@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ("product", "price", "quantity", "line_total_display")
+    readonly_fields = ("variant", "price", "quantity", "line_total_display")
     can_delete = True
 
     def line_total_display(self, obj):

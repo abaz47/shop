@@ -43,13 +43,13 @@ def cart_items_to_packages(cart_items) -> list[dict[str, int]]:
     Один товар = одна коробка; при quantity > 1 — столько же одинаковых мест.
 
     :param cart_items:
-        QuerySet или список CartItem с select_related("product").
+        QuerySet или список CartItem с select_related("variant__product").
     :return: Список словарей
         {"weight": г, "length": мм, "width": мм, "height": мм}.
     """
     packages = []
     for item in cart_items:
-        product = item.product
+        product = item.variant.product
         for _ in range(item.quantity):
             packages.append({
                 "weight": product.weight_g or DEFAULT_WEIGHT_G,

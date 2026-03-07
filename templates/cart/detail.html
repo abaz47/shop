@@ -33,10 +33,10 @@
             {% for item in items %}
             <tr class="cart-item-row">
               <td class="cart-cell-photo" data-label="">
-                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none">
-                  {% with main_image=item.product.get_main_image %}
+                <a href="{{ item.variant.product.get_absolute_url }}" class="text-decoration-none">
+                  {% with main_image=item.variant.get_main_image %}
                   {% if main_image %}
-                  <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
+                  <img src="{{ main_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
                   {% else %}
                   <div class="bg-light rounded d-flex align-items-center justify-content-center text-body-secondary cart-item-img-placeholder" style="width: 60px; height: 60px;">
                     <span class="small">Нет фото</span>
@@ -46,10 +46,13 @@
                 </a>
               </td>
               <td class="cart-cell-product" data-label="Товар">
-                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-dark text-decoration-none fw-medium">{{ item.product.name }}</a>
+                <a href="{{ item.variant.product.get_absolute_url }}" class="text-dark text-decoration-none fw-medium">{{ item.variant.product.name }}</a>
+                {% if item.variant.sku %}
+                <div class="small text-body-secondary">Артикул: {{ item.variant.sku }}</div>
+                {% endif %}
               </td>
               <td class="cart-cell-qty text-start" data-label="Количество">
-                <form action="{% url 'cart:update' item.product.pk %}" method="post" class="cart-quantity-form">
+                <form action="{% url 'cart:update' item.variant.pk %}" method="post" class="cart-quantity-form">
                   {% csrf_token %}
                   <input type="hidden" name="quantity" value="{{ item.quantity }}">
                   <div class="cart-qty-controls">
@@ -61,7 +64,7 @@
               </td>
               <td class="cart-cell-total text-end fw-bold" data-label="Сумма">{{ item.line_total|floatformat:0 }} ₽</td>
               <td class="cart-cell-remove" data-label="">
-                <form action="{% url 'cart:remove' item.product.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.product.name }}">
+                <form action="{% url 'cart:remove' item.variant.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.variant.product.name }}">
                   {% csrf_token %}
                   <button type="button" class="btn btn-sm btn-outline-danger cart-remove-btn" aria-label="Удалить">✕</button>
                 </form>

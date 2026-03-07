@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from cart.models import Cart, CartItem
-from catalog.models import Category, Product
+from catalog.models import Category, Product, ProductVariant
 from orders import services as order_services
 from orders import views as order_views
 from orders.models import Order, OrderItem
@@ -21,17 +21,22 @@ pytestmark = pytest.mark.django_db
 
 def _create_product() -> Product:
     category = Category.objects.create(name="Тест", slug="test", order=0)
-    return Product.objects.create(
+    product = Product.objects.create(
         name="Тестовый товар",
         category=category,
-        price=1000,
-        discount_percent=0,
         is_active=True,
         weight_g=500,
         length_mm=100,
         width_mm=100,
         height_mm=100,
     )
+    ProductVariant.objects.create(
+        product=product,
+        price=1000,
+        discount_percent=0,
+        is_active=True,
+    )
+    return product
 
 
 class TestTariffHelpers:
@@ -172,7 +177,11 @@ class TestCheckoutTariffsView:
         client.force_login(user)
         product = _create_product()
         cart = Cart.objects.create(user=user)
-        CartItem.objects.create(cart=cart, product=product, quantity=1)
+        CartItem.objects.create(
+            cart=cart,
+            variant=product.variants.first(),
+            quantity=1
+        )
         return user, cart
 
     def test_checkout_tariffs_requires_login(self, client):
@@ -296,10 +305,11 @@ class TestCreateCdekOrder:
             delivery_address="",
             comment="Комментарий",
         )
+        variant = product.variants.first()
         OrderItem.objects.create(
             order=order,
-            product=product,
-            price=product.discounted_price,
+            variant=variant,
+            price=variant.discounted_price,
             quantity=1,
         )
         return order

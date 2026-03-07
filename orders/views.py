@@ -174,7 +174,9 @@ def _process_place_order(request, form, cart, items, products_total):
     to_city_code = form.cleaned_data["city_code"]
     from_city_code = getattr(settings, "CDEK_FROM_CITY_CODE", 137)
 
-    packages = cart_items_to_packages(cart.items.select_related("product"))
+    packages = cart_items_to_packages(
+        cart.items.select_related("variant__product")
+    )
     result = calculate_delivery(
         from_city_code=from_city_code,
         to_city_code=to_city_code,
@@ -221,8 +223,8 @@ def _process_place_order(request, form, cart, items, products_total):
     for item in items:
         OrderItem.objects.create(
             order=order,
-            product=item.product,
-            price=item.product.discounted_price,
+            variant=item.variant,
+            price=item.variant.discounted_price,
             quantity=item.quantity,
         )
     cart.items.all().delete()
@@ -303,7 +305,7 @@ def _get_checkout_context(request, cart, items, products_total):
 
             if action == "calculate":
                 packages = cart_items_to_packages(
-                    cart.items.select_related("product")
+                    cart.items.select_related("variant__product")
                 )
                 result = calculate_delivery(
                     from_city_code=from_city_code,
@@ -384,7 +386,7 @@ def checkout_success(request, order_id):
     """
     order = (
         Order.objects.filter(user=request.user, pk=order_id)
-        .prefetch_related("items__product__images")
+        .prefetch_related("items__variant__product", "items__variant__images")
         .first()
     )
     if not order:
@@ -430,7 +432,7 @@ def checkout_tariffs(request):
     Возвращает JSON: {"tariffs": [...]}.
     """
     cart = get_or_create_cart(request)
-    items = cart.items.select_related("product")
+    items = cart.items.select_related("variant__product")
     if not items.exists():
         return JsonResponse({"tariffs": []})
 
@@ -483,9 +485,9 @@ def repeat_order_view(request, order_id):
         messages.warning(request, "Заказ не найден.")
         return redirect("accounts:profile")
     cart = get_or_create_cart(request)
-    for item in order.items.select_related("product"):
+    for item in order.items.select_related("variant"):
         cart_item, created = cart.items.get_or_create(
-            product=item.product,
+            variant=item.variant,
             defaults={"quantity": item.quantity},
         )
         if not created:
