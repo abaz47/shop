@@ -2,10 +2,9 @@
 Представления корзины.
 """
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.views.decorators.http import require_http_methods, require_POST
 
-from catalog.models import Product
+from catalog.models import ProductVariant
 
 from .models import CartItem
 from .utils import get_or_create_cart
@@ -24,20 +23,23 @@ def cart_detail(request):
     """
     cart = get_or_create_cart(request)
     items = list(
-        cart.items.select_related("product")
-        .prefetch_related("product__images")
+        cart.items.select_related("variant__product")
+        .prefetch_related("variant__images")
         .order_by("id")
     )
 
     removed_product_names = []
-    inactive_items = [it for it in items if not it.product.is_active]
+    inactive_items = [
+        it for it in items if not it.variant.is_active
+        or not it.variant.product.is_active
+    ]
     if inactive_items:
         for it in inactive_items:
-            removed_product_names.append(it.product.name)
+            removed_product_names.append(it.variant.product.name)
             it.delete()
         items = list(
-            cart.items.select_related("product")
-            .prefetch_related("product__images")
+            cart.items.select_related("variant__product")
+            .prefetch_related("variant__images")
             .order_by("id")
         )
 
@@ -64,10 +66,14 @@ def cart_detail(request):
 
 
 @require_POST
-def cart_add(request, product_id):
-    """Добавить товар в корзину (POST)."""
-    product = get_object_or_404(
-        Product.objects.filter(is_active=True), pk=product_id
+def cart_add(request, variant_id):
+    """Добавить вариант товара в корзину (POST)."""
+    variant = get_object_or_404(
+        ProductVariant.objects.filter(
+            is_active=True,
+            product__is_active=True,
+        ).select_related("product"),
+        pk=variant_id,
     )
     cart = get_or_create_cart(request)
     quantity = int(request.POST.get("quantity", 1))
@@ -77,7 +83,7 @@ def cart_add(request, product_id):
 
     item, created = CartItem.objects.get_or_create(
         cart=cart,
-        product=product,
+        variant=variant,
         defaults={"quantity": quantity},
     )
     if not created:
@@ -87,22 +93,20 @@ def cart_add(request, product_id):
         )
         item.save(update_fields=["quantity"])
 
-    redirect_url = request.POST.get(
-        "next"
-    ) or request.GET.get(
-        "next"
-    ) or reverse(
-        "catalog:product_detail", kwargs={"pk": product.pk}
+    redirect_url = (
+        request.POST.get("next")
+        or request.GET.get("next")
+        or variant.product.get_absolute_url()
     )
     return redirect(redirect_url)
 
 
 @require_POST
-def cart_update(request, product_id):
+def cart_update(request, variant_id):
     """Изменить количество товара в корзине (POST)."""
     cart = get_or_create_cart(request)
     item = get_object_or_404(
-        CartItem.objects.filter(cart=cart, product_id=product_id)
+        CartItem.objects.filter(cart=cart, variant_id=variant_id)
     )
     quantity = int(request.POST.get("quantity", 1))
     if quantity < 1:
@@ -114,11 +118,11 @@ def cart_update(request, product_id):
 
 
 @require_POST
-def cart_remove(request, product_id):
+def cart_remove(request, variant_id):
     """Удалить позицию из корзины (POST)."""
     cart = get_or_create_cart(request)
     item = get_object_or_404(
-        CartItem.objects.filter(cart=cart, product_id=product_id)
+        CartItem.objects.filter(cart=cart, variant_id=variant_id)
     )
     item.delete()
     return redirect("cart:detail")

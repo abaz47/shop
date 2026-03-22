@@ -29,7 +29,7 @@
       <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         {% for product in products %}
         <div class="col">
-          <a href="{% url 'catalog:product_detail' product.pk %}" class="text-decoration-none text-dark">
+          <a href="{{ product.get_absolute_url }}" class="text-decoration-none text-dark">
             <div class="card h-100 catalog-card shadow-sm">
               <div class="catalog-card-image ratio ratio-1x1 bg-light">
                 {% with main_image=product.get_main_image %}
@@ -44,19 +44,23 @@
               </div>
               <div class="card-body d-flex flex-column">
                 <h2 class="card-title h6 mb-2 text-truncate" title="{{ product.name }}">{{ product.name }}</h2>
-                {% if product.sku %}
-                <div class="small text-body-secondary mb-1 text-truncate">
-                  Артикул: {{ product.sku }}
-                </div>
-                {% endif %}
                 <div class="mt-auto">
-                  {% if product.has_discount %}
-                  <span class="text-decoration-line-through text-body-secondary small">{{ product.price|floatformat:0 }} ₽</span>
-                  <span class="text-danger fw-bold ms-1">{{ product.discounted_price|floatformat:0 }} ₽</span>
-                  <span class="badge bg-danger ms-1">−{{ product.discount_percent }}%</span>
+                  {% with first_variant=product.variants.first %}
+                  {% if first_variant %}
+                    {% if first_variant.has_discount %}
+                    <span class="text-decoration-line-through text-body-secondary small">{{ first_variant.price|floatformat:0 }} ₽</span>
+                    <span class="text-danger fw-bold ms-1">{{ first_variant.discounted_price|floatformat:0 }} ₽</span>
+                    <span class="badge bg-danger ms-1">−{{ first_variant.discount_percent }}%</span>
+                    {% else %}
+                    <span class="fw-bold">{{ first_variant.discounted_price|floatformat:0 }} ₽</span>
+                    {% endif %}
+                    {% if product.variants.count > 1 %}
+                    <span class="text-body-secondary small ms-1">и ещё {{ product.variants.count|add:"-1" }}</span>
+                    {% endif %}
                   {% else %}
-                  <span class="fw-bold">{{ product.price|floatformat:0 }} ₽</span>
+                  <span class="text-body-secondary small">—</span>
                   {% endif %}
+                  {% endwith %}
                 </div>
               </div>
             </div>

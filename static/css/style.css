@@ -777,3 +777,43 @@ footer {
 .cdek-tariff-item.btn-primary .text-body-secondary {
   color: rgba(255, 255, 255, 0.85) !important;
 }
+
+/* Модальное окно об использовании cookie */
+.cookie-consent-modal .modal-content {
+  background-color: var(--yt-bg-dark);
+  color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.cookie-consent-modal .modal-header .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.cookie-consent-modal .modal-title {
+  color: var(--yt-accent);
+  font-weight: 600;
+}
+
+.cookie-consent-modal .cookie-consent-link {
+  color: var(--yt-accent);
+  text-decoration: underline;
+}
+
+.cookie-consent-modal .cookie-consent-link:hover {
+  color: var(--yt-accent-hover);
+}
+
+.cookie-consent-modal .cookie-consent-accept-btn {
+  background-color: var(--yt-bronze);
+  border-color: var(--yt-bronze);
+  color: #fff;
+  font-weight: 500;
+}
+
+.cookie-consent-modal .cookie-consent-accept-btn:hover {
+  background-color: var(--yt-bronze-light);
+  border-color: var(--yt-bronze-light);
+  color: #fff;
+}

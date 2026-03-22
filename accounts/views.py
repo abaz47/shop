@@ -25,6 +25,11 @@ from .forms import (
     RegistrationForm,
 )
 from .models import EmailVerification, UserProfile
+from .rate_limit import (
+    check_login_rate_limit,
+    clear_login_attempts,
+    increment_login_attempts,
+)
 from .utils import send_activation_email, send_email_async
 
 
@@ -101,11 +106,22 @@ def activate_account(request, token):
 class CustomLoginView(LoginView):
     """
     Представление для входа пользователя.
+    Ограничение: не более 5 неудачных попыток с одного IP за 15 минут.
     """
 
     form_class = LoginForm
     template_name = "accounts/login.html"
     redirect_authenticated_user = True
+
+    def dispatch(self, request, *args, **kwargs):
+        response = check_login_rate_limit(request)
+        if response is not None:
+            return response
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        increment_login_attempts(self.request)
+        return super().form_invalid(form)
 
     def form_valid(self, form):
         """
@@ -121,6 +137,7 @@ class CustomLoginView(LoginView):
             )
             return redirect("accounts:login")
 
+        clear_login_attempts(self.request)
         session_key_before = self.request.session.session_key
         response = super().form_valid(form)
 

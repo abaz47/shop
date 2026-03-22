@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Category, Product, ProductImage
+from .models import Category, Product, ProductImage, ProductVariant
 
 
 @admin.register(Category)
@@ -19,34 +19,39 @@ class ProductImageInline(admin.TabularInline):
     fields = ("image", "is_primary", "order")
 
 
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 0
+    fields = (
+        "color",
+        "sku",
+        "price",
+        "discount_percent",
+        "order",
+        "is_active"
+    )
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "sku",
+        "slug",
         "category",
-        "price_display",
-        "discount_display",
         "is_active",
         "created_at",
     )
     list_filter = ("category", "is_active")
-    search_fields = ("name", "sku", "description")
+    search_fields = ("name", "description")
     list_editable = ("is_active",)
     readonly_fields = ("id", "created_at", "updated_at")
-    inlines = [ProductImageInline]
+    prepopulated_fields = {"slug": ("name",)}
+    inlines = [ProductVariantInline]
     fieldsets = (
         (
             None,
             {
-                "fields": (
-                    "id",
-                    "sku",
-                    "category",
-                    "name",
-                    "price",
-                    "discount_percent",
-                )
+                "fields": ("id", "slug", "category", "name")
             },
         ),
         ("Описание", {"fields": ("description",)}),
@@ -63,6 +68,23 @@ class ProductAdmin(admin.ModelAdmin):
         ),
         ("Публикация", {"fields": ("is_active", "created_at", "updated_at")}),
     )
+
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = (
+        "product",
+        "color",
+        "sku",
+        "price_display",
+        "discount_display",
+        "is_active",
+    )
+    list_filter = ("is_active", "product__category")
+    search_fields = ("sku", "product__name", "color")
+    list_editable = ("is_active",)
+    inlines = [ProductImageInline]
+    raw_id_fields = ("product",)
 
     def price_display(self, obj):
         if obj.has_discount:

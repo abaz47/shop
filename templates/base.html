@@ -12,6 +12,7 @@
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/style.css' %}" rel="stylesheet">
   {% block extra_css %}{% endblock %}
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
   {# Хэдер: логотип, аккаунт и корзина #}
@@ -240,7 +241,40 @@
     </div>
   </footer>
 
+  {# Модальное окно об использовании cookie (при первом заходе) #}
+  <div class="modal fade cookie-consent-modal" id="cookie-consent-modal" tabindex="-1" aria-labelledby="cookie-consent-title" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content cookie-consent-modal-content">
+        <div class="modal-header cookie-consent-modal-header border-0 pb-0">
+          <h2 class="modal-title h5 cookie-consent-modal-title" id="cookie-consent-title">Использование cookie</h2>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+        </div>
+        <div class="modal-body cookie-consent-modal-body pt-2">
+          <p class="mb-0">
+            Мы используем cookie для работы сайта, корзины и авторизации. Продолжая пользоваться сайтом, вы соглашаетесь с нашей <a href="{% url 'core:legal_page' slug='privacy' %}" class="cookie-consent-link">политикой конфиденциальности</a>.
+          </p>
+        </div>
+        <div class="modal-footer cookie-consent-modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-primary cookie-consent-accept-btn" id="cookie-consent-accept" data-bs-dismiss="modal">Понятно</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+  (function() {
+    var key = 'cookie_consent_seen';
+    var modalEl = document.getElementById('cookie-consent-modal');
+    if (!modalEl || localStorage.getItem(key)) return;
+    var modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+    modal.show();
+    modalEl.addEventListener('hidden.bs.modal', function onHidden() {
+      try { localStorage.setItem(key, '1'); } catch (e) {}
+      modalEl.removeEventListener('hidden.bs.modal', onHidden);
+    });
+  })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

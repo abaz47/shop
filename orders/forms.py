@@ -82,7 +82,7 @@ class CheckoutForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "rows": 2,
-                "placeholder": "Пожелания по доставке",
+                "placeholder": "Этаж, код домофона, прочая информация",
             }
         ),
     )

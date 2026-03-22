@@ -33,10 +33,10 @@
             {% for item in items %}
             <tr class="cart-item-row">
               <td class="cart-cell-photo" data-label="">
-                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-decoration-none">
-                  {% with main_image=item.product.get_main_image %}
+                <a href="{{ item.variant.product.get_absolute_url }}" class="text-decoration-none">
+                  {% with main_image=item.variant.get_main_image %}
                   {% if main_image %}
-                  <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
+                  <img src="{{ main_image.image.url }}" alt="{{ item.variant.product.name }}" class="img-thumbnail cart-item-img" style="max-height: 60px; width: auto;">
                   {% else %}
                   <div class="bg-light rounded d-flex align-items-center justify-content-center text-body-secondary cart-item-img-placeholder" style="width: 60px; height: 60px;">
                     <span class="small">Нет фото</span>
@@ -46,10 +46,13 @@
                 </a>
               </td>
               <td class="cart-cell-product" data-label="Товар">
-                <a href="{% url 'catalog:product_detail' item.product.pk %}" class="text-dark text-decoration-none fw-medium">{{ item.product.name }}</a>
+                <a href="{{ item.variant.product.get_absolute_url }}" class="text-dark text-decoration-none fw-medium">{{ item.variant.product.name }}</a>
+                {% if item.variant.sku %}
+                <div class="small text-body-secondary">Артикул: {{ item.variant.sku }}</div>
+                {% endif %}
               </td>
               <td class="cart-cell-qty text-start" data-label="Количество">
-                <form action="{% url 'cart:update' item.product.pk %}" method="post" class="cart-quantity-form">
+                <form action="{% url 'cart:update' item.variant.pk %}" method="post" class="cart-quantity-form">
                   {% csrf_token %}
                   <input type="hidden" name="quantity" value="{{ item.quantity }}">
                   <div class="cart-qty-controls">
@@ -61,7 +64,7 @@
               </td>
               <td class="cart-cell-total text-end fw-bold" data-label="Сумма">{{ item.line_total|floatformat:0 }} ₽</td>
               <td class="cart-cell-remove" data-label="">
-                <form action="{% url 'cart:remove' item.product.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.product.name }}">
+                <form action="{% url 'cart:remove' item.variant.pk %}" method="post" class="cart-remove-form" data-product-name="{{ item.variant.product.name }}">
                   {% csrf_token %}
                   <button type="button" class="btn btn-sm btn-outline-danger cart-remove-btn" aria-label="Удалить">✕</button>
                 </form>
@@ -94,9 +97,7 @@
       </div>
       <div class="card-body">
         <p class="text-body-secondary small mb-3">
-          Отправка товаров из Санкт-Петербурга (ПВЗ).
-          Выберите пункт выдачи или адрес на карте, нажмите в карточке кнопку <strong>«Выбрать»</strong>,
-          затем укажите вариант доставки в блоке «Варианты доставки» ниже.
+          Отправка из Санкт-Петербурга. Выберите способ доставки.
         </p>
 
         <div class="d-none">
@@ -107,51 +108,71 @@
           {{ checkout_context.form.delivery_address }}
         </div>
 
+        <div class="mb-4">
+          <span class="form-label small fw-semibold d-block">1. Способ доставки</span>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="cdek_delivery_type" id="cdek-type-pvz" value="office">
+            <label class="btn btn-outline-secondary" for="cdek-type-pvz">В пункт выдачи (ПВЗ / постамат)</label>
+            <input type="radio" class="btn-check" name="cdek_delivery_type" id="cdek-type-door" value="door">
+            <label class="btn btn-outline-secondary" for="cdek-type-door">До двери</label>
+          </div>
+        </div>
+
         {% if not checkout_context.yandex_maps_api_key %}
         <p class="alert alert-warning small mb-3">
           Карта ПВЗ недоступна: не задан ключ Яндекс.Карт (YANDEX_MAPS_API_KEY).
         </p>
         {% endif %}
 
-        <div id="cdek-widget-container" style="width: 100%; height: 500px;"></div>
-
-        <div id="cdek-pvz-selected" class="alert alert-light border small mt-2 mb-0 d-none" role="status">
-          <strong>Выбрано:</strong> <span id="cdek-pvz-address"></span>
+        <div id="cdek-pvz-block" class="mb-3 d-none">
+          <p class="text-body-secondary small mb-2">Выберите пункт выдачи на карте и нажмите <strong>«Выбрать»</strong> в карточке.</p>
+          <div id="cdek-widget-container" style="width: 100%; height: 500px;"></div>
+          <div id="cdek-pvz-selected" class="alert alert-light border small mt-2 mb-0 d-none" role="status">
+            <strong>Выбрано:</strong> <span id="cdek-pvz-address"></span>
+          </div>
         </div>
 
-        <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">
-          Рассчитываем доступные тарифы доставки…
+        <div id="cdek-door-block" class="mb-3 d-none">
+          <div class="mb-3">
+            <label for="cdek-city-input" class="form-label small">Город получателя</label>
+            <div class="position-relative">
+              <input type="text" id="cdek-city-input" class="form-control form-control-sm"
+                     placeholder="Начните вводить город…" autocomplete="off">
+              <div id="cdek-city-suggestions" class="list-group position-absolute start-0 end-0 top-100 mt-1 shadow" style="z-index: 1050; max-height: 220px; overflow-y: auto; display: none;"></div>
+            </div>
+            <p id="cdek-city-selected" class="small text-success mt-1 mb-0 d-none" role="status"></p>
+          </div>
+          <div class="mb-3">
+            <label for="cdek-door-address-input" class="form-label small">Улица, дом</label>
+            <div class="position-relative">
+              <input type="text" id="cdek-door-address-input" class="form-control form-control-sm"
+                     placeholder="Начните вводить адрес в выбранном городе…" maxlength="300" autocomplete="off">
+              <div id="cdek-door-address-suggestions" class="list-group position-absolute start-0 end-0 top-100 mt-1 shadow" style="z-index: 1100; max-height: 220px; overflow-y: auto; display: none;"></div>
+            </div>
+            <p class="form-text small mt-1 mb-0">При вводе могут появиться подсказки. Выберите адрес из списка — после этого появятся варианты доставки.</p>
+          </div>
         </div>
+
+        <div id="cdek-comment-block" class="mt-3 d-none">
+          <label for="id_comment" class="form-label">{{ checkout_context.form.comment.label }}</label>
+          {{ checkout_context.form.comment }}
+          {% if checkout_context.form.comment.errors %}<div class="text-danger small">{{ checkout_context.form.comment.errors }}</div>{% endif %}
+        </div>
+
+        <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">Рассчитываем доступные тарифы…</div>
         <div id="cdek-tariffs-panel" class="mt-2 d-none">
           <h4 class="h6 mb-2">Варианты доставки</h4>
           <div id="cdek-tariffs-list" class="d-grid gap-2"></div>
         </div>
         <div id="cdek-tariffs-error" class="alert alert-danger small mt-2 d-none"></div>
 
-        {% if checkout_context.form.pvz_code.errors %}
-          <div class="text-danger small mt-1">{{ checkout_context.form.pvz_code.errors }}</div>
-        {% endif %}
-        {% if checkout_context.form.city_code.errors %}
-          <div class="text-danger small mt-1">{{ checkout_context.form.city_code.errors }}</div>
-        {% endif %}
-        {% if checkout_context.form.delivery_tariff.errors %}
-          <div class="text-danger small mt-1">{{ checkout_context.form.delivery_tariff.errors }}</div>
-        {% endif %}
-        {% if checkout_context.form.delivery_address.errors %}
-          <div class="text-danger small mt-1">{{ checkout_context.form.delivery_address.errors }}</div>
-        {% endif %}
+        {% if checkout_context.form.pvz_code.errors %}<div class="text-danger small mt-1">{{ checkout_context.form.pvz_code.errors }}</div>{% endif %}
+        {% if checkout_context.form.city_code.errors %}<div class="text-danger small mt-1">{{ checkout_context.form.city_code.errors }}</div>{% endif %}
+        {% if checkout_context.form.delivery_tariff.errors %}<div class="text-danger small mt-1">{{ checkout_context.form.delivery_tariff.errors }}</div>{% endif %}
+        {% if checkout_context.form.delivery_address.errors %}<div class="text-danger small mt-1">{{ checkout_context.form.delivery_address.errors }}</div>{% endif %}
 
         <div id="cdek-tariff-warning" class="alert alert-warning small mt-2 mb-0 d-none">
-          Для выбранного пункта выдачи нет доступных тарифов доставки.
-          Пожалуйста, выберите пункт выдачи в другом городе.
-        </div>
-
-        <div class="mt-3">
-          <label for="id_comment" class="form-label">{{ checkout_context.form.comment.label }}</label>
-          {{ checkout_context.form.comment }}
-          {% if checkout_context.form.comment.errors %}
-            <div class="text-danger small">{{ checkout_context.form.comment.errors }}</div>
-          {% endif %}
+          Для выбранного пункта выдачи нет доступных тарифов. Выберите другой ПВЗ.
         </div>
       </div>
     </div>
@@ -405,6 +426,211 @@
   var tariffsLoading = document.getElementById('cdek-tariffs-loading');
   var tariffsError   = document.getElementById('cdek-tariffs-error');
 
+  var cityInput          = document.getElementById('cdek-city-input');
+  var citySuggestions    = document.getElementById('cdek-city-suggestions');
+  var citySelectedEl     = document.getElementById('cdek-city-selected');
+  var pvzBlock           = document.getElementById('cdek-pvz-block');
+  var doorBlock          = document.getElementById('cdek-door-block');
+  var doorAddressInput   = document.getElementById('cdek-door-address-input');
+  var doorAddressSuggestions = document.getElementById('cdek-door-address-suggestions');
+  var deliveryAddressField = document.getElementById('id_delivery_address');
+  var commentBlock       = document.getElementById('cdek-comment-block');
+  var typePvzRadio       = document.getElementById('cdek-type-pvz');
+  var typeDoorRadio      = document.getElementById('cdek-type-door');
+  var selectedCity       = { code: null, name: null };
+  var cityFetchTimer     = null;
+  var addressFetchTimer  = null;
+
+  function setSelectedCity(code, name) {
+    selectedCity = { code: code, name: name || '' };
+    if (cityCodeInput) cityCodeInput.value = code ? String(code) : '';
+    if (cityInput) cityInput.value = name || '';
+    if (citySelectedEl) {
+      if (name) {
+        citySelectedEl.textContent = 'Выбран город: ' + name;
+        citySelectedEl.classList.remove('d-none');
+      } else {
+        citySelectedEl.classList.add('d-none');
+      }
+    }
+    if (citySuggestions) citySuggestions.style.display = 'none';
+    if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+    if (!code && doorBlock && doorBlock.classList.contains('d-none') === false) {
+      clearTariffs();
+      var costEl = document.getElementById('delivery-cost-display');
+      var totalEl = document.getElementById('total-display');
+      if (costEl) costEl.textContent = 'укажите адрес';
+      if (totalEl) totalEl.textContent = formatRub(productsTotal);
+      setOrderButtonEnabled(false);
+    }
+    if (code && typeDoorRadio && typeDoorRadio.checked) {
+      clearTariffs();
+      var cEl = document.getElementById('delivery-cost-display');
+      var tEl = document.getElementById('total-display');
+      if (cEl) cEl.textContent = 'укажите адрес';
+      if (tEl) tEl.textContent = formatRub(productsTotal);
+      setOrderButtonEnabled(false);
+    }
+  }
+
+  function loadCitySuggestions(query) {
+    if (!query || query.length < 2) {
+      if (citySuggestions) citySuggestions.style.display = 'none';
+      return;
+    }
+    var url = "{% url 'orders:checkout_cities' %}?q=" + encodeURIComponent(query);
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      var cities = data && data.cities ? data.cities : [];
+      if (!citySuggestions) return;
+      citySuggestions.innerHTML = '';
+      if (cities.length === 0) {
+        citySuggestions.style.display = 'none';
+        return;
+      }
+      cities.forEach(function(c) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action text-start';
+        item.textContent = (c.city || '') + (c.region ? ', ' + c.region : '');
+        item.addEventListener('click', function() {
+          setSelectedCity(parseInt(c.code, 10), c.city || '');
+        });
+        citySuggestions.appendChild(item);
+      });
+      citySuggestions.style.display = 'block';
+    }).catch(function() {
+      if (citySuggestions) citySuggestions.style.display = 'none';
+    });
+  }
+
+  if (cityInput) {
+    cityInput.addEventListener('input', function() {
+      clearTimeout(cityFetchTimer);
+      var q = cityInput.value.trim();
+      if (!q) setSelectedCity(null, null);
+      else cityFetchTimer = setTimeout(function() { loadCitySuggestions(q); }, 250);
+    });
+    cityInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (citySuggestions) citySuggestions.style.display = 'none';
+      }, 200);
+    });
+  }
+
+  function loadAddressSuggestions(query) {
+    var q = (query != null && query !== undefined) ? String(query).trim() : '';
+    if (!selectedCity.name || q.length < 2) {
+      if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+      return;
+    }
+    var url = "{% url 'orders:checkout_address_suggest' %}?city=" + encodeURIComponent(selectedCity.name) + "&q=" + encodeURIComponent(q);
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+      var list = data && data.suggestions ? data.suggestions : [];
+      if (!doorAddressSuggestions) return;
+      doorAddressSuggestions.innerHTML = '';
+      if (list.length === 0) {
+        doorAddressSuggestions.style.display = 'none';
+        return;
+      }
+      list.forEach(function(s) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action text-start small';
+        item.textContent = s.text || s.address || '';
+        (function(sug) {
+          item.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var val = sug.address || sug.text || '';
+            if (doorAddressInput) doorAddressInput.value = val;
+            if (deliveryAddressField) deliveryAddressField.value = val;
+            doorAddressSuggestions.style.display = 'none';
+            if (selectedCity.code && typeDoorRadio && typeDoorRadio.checked) {
+              loadTariffsFromBackend('door', selectedCity.code, selectedCity.name, null);
+            }
+          });
+        })(s);
+        doorAddressSuggestions.appendChild(item);
+      });
+      doorAddressSuggestions.style.display = 'block';
+    }).catch(function() {
+      if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+    });
+  }
+
+  if (doorAddressInput && deliveryAddressField) {
+    doorAddressInput.addEventListener('input', function() {
+      var val = doorAddressInput.value;
+      deliveryAddressField.value = val;
+      clearTimeout(addressFetchTimer);
+      if (!val.trim()) {
+        if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+        return;
+      }
+      addressFetchTimer = setTimeout(function() {
+        var currentVal = doorAddressInput ? doorAddressInput.value.trim() : '';
+        if (currentVal.length < 2) {
+          if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+          return;
+        }
+        loadAddressSuggestions(currentVal);
+      }, 300);
+    });
+    doorAddressInput.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+      }, 200);
+    });
+  }
+
+  function switchDeliveryType(mode) {
+    if (deliveryModeInput) deliveryModeInput.value = mode || '';
+    if (deliveryTariffInput) deliveryTariffInput.value = '';
+    selectedCity = { code: null, name: null };
+    if (cityCodeInput) cityCodeInput.value = '';
+    if (cityInput) cityInput.value = '';
+    if (citySelectedEl) citySelectedEl.classList.add('d-none');
+    if (doorAddressInput) doorAddressInput.value = '';
+    if (deliveryAddressField) deliveryAddressField.value = '';
+    clearTariffs();
+    var costEl = document.getElementById('delivery-cost-display');
+    var totalEl = document.getElementById('total-display');
+    if (costEl) costEl.textContent = 'укажите адрес';
+    if (totalEl) totalEl.textContent = formatRub(productsTotal);
+    setOrderButtonEnabled(false);
+    var warning = document.getElementById('cdek-tariff-warning');
+    if (warning) warning.classList.add('d-none');
+    if (tariffsError) tariffsError.classList.add('d-none');
+
+    if (commentBlock) {
+      if (mode === 'door') commentBlock.classList.remove('d-none');
+      else commentBlock.classList.add('d-none');
+    }
+    if (doorAddressSuggestions) doorAddressSuggestions.style.display = 'none';
+
+    if (mode === 'office') {
+      if (pvzBlock) pvzBlock.classList.remove('d-none');
+      if (doorBlock) doorBlock.classList.add('d-none');
+      tryInitPvzWidget();
+    } else if (mode === 'door') {
+      if (pvzBlock) pvzBlock.classList.add('d-none');
+      if (doorBlock) doorBlock.classList.remove('d-none');
+    } else {
+      if (pvzBlock) pvzBlock.classList.add('d-none');
+      if (doorBlock) doorBlock.classList.add('d-none');
+    }
+  }
+
+  if (typePvzRadio) {
+    typePvzRadio.addEventListener('change', function() {
+      if (this.checked) switchDeliveryType('office');
+    });
+  }
+  if (typeDoorRadio) {
+    typeDoorRadio.addEventListener('change', function() {
+      if (this.checked) switchDeliveryType('door');
+    });
+  }
+
   function formatRub(value) {
     if (typeof value !== 'number' || isNaN(value)) return '—';
     return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + '\u00a0₽';
@@ -489,18 +715,20 @@
     clearTariffs();
     if (tariffsLoading) tariffsLoading.classList.remove('d-none');
 
+    var body = {
+      mode: mode,
+      city_code: cityCode,
+      city: cityName || '',
+      point_type: pointType || ''
+    };
+
     fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrf
       },
-      body: JSON.stringify({
-        mode: mode,
-        city_code: cityCode,
-        city: cityName || '',
-        point_type: pointType || ''
-      })
+      body: JSON.stringify(body)
     })
       .then(function(response) {
         if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -550,74 +778,49 @@
   var cdekServiceUrl   = "{{ checkout_context.cdek_service_url|escapejs }}";
   var yandexMapsApiKey = "{{ checkout_context.yandex_maps_api_key|escapejs }}";
 
-  function initCdekWidget() {
-    if (cdekWidgetInited) return;
+  function tryInitPvzWidget() {
+    if (cdekWidgetInited) {
+      if (window.cdekWidgetInstance && selectedCity.name) {
+        try { window.cdekWidgetInstance.updateLocation(selectedCity.name); } catch (e) {}
+      }
+      return;
+    }
     if (typeof window.CDEKWidget === 'undefined' || !cdekServiceUrl || !yandexMapsApiKey) return;
     if (!document.getElementById('cdek-widget-container')) return;
     cdekWidgetInited = true;
     try {
+      var defaultLoc = selectedCity.name || [30.315868, 59.939095];
       window.cdekWidgetInstance = new window.CDEKWidget({
-        defaultLocation: [30.315868, 59.939095],
+        defaultLocation: defaultLoc,
         root: 'cdek-widget-container',
         apiKey: yandexMapsApiKey,
         servicePath: cdekServiceUrl,
         canChoose: true,
         tariffs: { office: [], pickup: [], door: [] },
-        hideFilters: {
-          have_cashless: true,
-          have_cash: true,
-          is_dressing_room: true,
-          type: false
-        },
+        hideFilters: { have_cashless: true, have_cash: true, is_dressing_room: true, type: false },
         forceFilters: { type: null },
-        hideDeliveryOptions: { door: false, office: false },
+        hideDeliveryOptions: { door: true, office: false },
         onChoose: function(mode, tariff, address) {
-          var pvzInput      = document.getElementById('id_pvz_code');
-          var addrTextarea  = document.getElementById('id_delivery_address');
-          var addrLabel     = document.getElementById('cdek-pvz-address');
+          if (mode !== 'office' || !address) return;
+          var pvzInput = document.getElementById('id_pvz_code');
+          var addrLabel = document.getElementById('cdek-pvz-address');
           var selectedBlock = document.getElementById('cdek-pvz-selected');
-          var warning       = document.getElementById('cdek-tariff-warning');
-
+          var warning = document.getElementById('cdek-tariff-warning');
           if (deliveryTariffInput) deliveryTariffInput.value = '';
-          if (deliveryModeInput) deliveryModeInput.value = '';
+          if (pvzInput) pvzInput.value = address.code || '';
+          if (cityCodeInput && address.city_code) cityCodeInput.value = address.city_code;
+          if (deliveryModeInput) deliveryModeInput.value = 'office';
+          var addrText = (address.city || '') + (address.address ? ', ' + address.address : '');
+          if (addrLabel) addrLabel.textContent = addrText || address.code || '—';
+          if (selectedBlock) selectedBlock.classList.remove('d-none');
+          if (warning) warning.classList.add('d-none');
           clearTariffs();
           var costEl = document.getElementById('delivery-cost-display');
           var totalEl = document.getElementById('total-display');
           if (costEl) costEl.textContent = 'укажите адрес';
           if (totalEl) totalEl.textContent = formatRub(productsTotal);
-          if (warning) warning.classList.add('d-none');
           setOrderButtonEnabled(false);
-
-          if (mode === 'office' && address) {
-            if (pvzInput) pvzInput.value = address.code || '';
-            if (cityCodeInput && address.city_code) cityCodeInput.value = address.city_code;
-            if (addrTextarea) addrTextarea.value = '';
-            var addrText = (address.city || '') + (address.address ? ', ' + address.address : '');
-            if (addrLabel) addrLabel.textContent = addrText || address.code || '—';
-          } else if (mode === 'door' && address) {
-            if (pvzInput) pvzInput.value = '';
-            var formatted = address.formatted || address.address || '';
-            if (addrLabel) addrLabel.textContent = formatted || '—';
-            if (addrTextarea && formatted) addrTextarea.value = formatted;
-            if (cityCodeInput) cityCodeInput.value = '';
-          }
-
-          if (selectedBlock) selectedBlock.classList.remove('d-none');
-          if (deliveryModeInput) deliveryModeInput.value = mode;
-
-          var cityCode = null;
-          var cityName = null;
-          var pointType = null;
-          if (mode === 'office' && address) {
-            cityCode = address.city_code || null;
-            cityName = address.city || null;
-            pointType = address.type || null;
-          } else if (mode === 'door' && address) {
-            cityName = address.city || null;
-          }
-          if (cityCode || cityName) {
-            loadTariffsFromBackend(mode, cityCode, cityName, pointType);
-          }
+          loadTariffsFromBackend('office', address.city_code || selectedCity.code, address.city || selectedCity.name, address.type || null);
         }
       });
     } catch (e) {
@@ -628,16 +831,21 @@
 
   function waitForYMapsAndInit() {
     if (typeof window.ymaps3 !== 'undefined' && window.ymaps3.ready) {
-      window.ymaps3.ready.then(function() { initCdekWidget(); });
+      window.ymaps3.ready.then(function() {});
       return;
     }
     setTimeout(waitForYMapsAndInit, 300);
   }
 
-  // Инициализация виджета и начальное состояние кнопки
   waitForYMapsAndInit();
 
-  // Если тариф уже выбран (например, после валидации формы), включаем кнопку
+  var form = document.getElementById('checkout-form');
+  if (form && deliveryAddressField && doorAddressInput) {
+    form.addEventListener('submit', function() {
+      deliveryAddressField.value = doorAddressInput.value;
+    });
+  }
+
   if (deliveryTariffInput && deliveryTariffInput.value) {
     setOrderButtonEnabled(true);
   } else {

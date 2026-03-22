@@ -48,7 +48,7 @@ class Cart(models.Model):
     def total_quantity(self):
         """Общее количество товаров в корзине."""
         return sum(
-            item.quantity for item in self.items.select_related("product")
+            item.quantity for item in self.items.select_related("variant")
         )
 
     @property
@@ -57,13 +57,13 @@ class Cart(models.Model):
         from decimal import Decimal
 
         total = Decimal("0")
-        for item in self.items.select_related("product"):
+        for item in self.items.select_related("variant"):
             total += item.line_total
         return total
 
 
 class CartItem(models.Model):
-    """Позиция в корзине."""
+    """Позиция в корзине (вариант товара)."""
 
     cart = models.ForeignKey(
         Cart,
@@ -71,23 +71,23 @@ class CartItem(models.Model):
         related_name="items",
         verbose_name="Корзина",
     )
-    product = models.ForeignKey(
-        "catalog.Product",
+    variant = models.ForeignKey(
+        "catalog.ProductVariant",
         on_delete=models.CASCADE,
         related_name="cart_items",
-        verbose_name="Товар",
+        verbose_name="Вариант товара",
     )
     quantity = models.PositiveIntegerField("Количество", default=1)
 
     class Meta:
         verbose_name = "позиция корзины"
         verbose_name_plural = "позиции корзины"
-        unique_together = [["cart", "product"]]
+        unique_together = [["cart", "variant"]]
 
     def __str__(self):
-        return f"{self.product.name} × {self.quantity}"
+        return f"{self.variant.product.name} × {self.quantity}"
 
     @property
     def line_total(self):
         """Сумма по позиции (цена со скидкой × количество)."""
-        return self.product.discounted_price * self.quantity
+        return self.variant.discounted_price * self.quantity

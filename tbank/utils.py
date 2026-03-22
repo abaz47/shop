@@ -101,11 +101,11 @@ def build_receipt(order: "Order") -> dict[str, Any]:
         receipt["Phone"] = phone
 
     # Позиции товаров.
-    for item in order.items.select_related("product").all():
+    for item in order.items.select_related("variant__product").all():
         price_kopeks = _to_kopeks(item.price)
         amount_kopeks = _to_kopeks(item.price * item.quantity)
         receipt["Items"].append({
-            "Name": item.product.name[:128],
+            "Name": item.variant.product.name[:128],
             "Price": price_kopeks,
             "Quantity": item.quantity,
             "Amount": amount_kopeks,

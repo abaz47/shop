@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from cart.models import Cart, CartItem
-from catalog.models import Category, Product
+from catalog.models import Category, Product, ProductVariant
 from orders import services as order_services
 from orders import views as order_views
 from orders.models import Order, OrderItem
@@ -21,17 +21,22 @@ pytestmark = pytest.mark.django_db
 
 def _create_product() -> Product:
     category = Category.objects.create(name="Тест", slug="test", order=0)
-    return Product.objects.create(
+    product = Product.objects.create(
         name="Тестовый товар",
         category=category,
-        price=1000,
-        discount_percent=0,
         is_active=True,
         weight_g=500,
         length_mm=100,
         width_mm=100,
         height_mm=100,
     )
+    ProductVariant.objects.create(
+        product=product,
+        price=1000,
+        discount_percent=0,
+        is_active=True,
+    )
+    return product
 
 
 class TestTariffHelpers:
@@ -159,6 +164,81 @@ class TestCheckoutCitiesView:
         assert called == {"query": "моск", "limit": 30}
 
 
+class TestCheckoutAddressSuggestView:
+    """Тесты API подсказок адреса (DaData) для доставки «до двери»."""
+
+    def test_checkout_address_suggest_requires_login(self, client):
+        url = reverse("orders:checkout_address_suggest")
+        response = client.get(url, {"city": "Москва", "q": "Тверская"})
+        assert response.status_code in {302, 301}
+
+    def test_checkout_address_suggest_returns_empty_when_no_city_or_q(
+        self, client
+    ):
+        user = get_user_model().objects.create_user(
+            username="u", email="u@ex.com", password="p"
+        )
+        client.force_login(user)
+        url = reverse("orders:checkout_address_suggest")
+        r1 = client.get(url, {"q": "Тверская"})
+        assert r1.status_code == 200
+        assert r1.json() == {"suggestions": []}
+        r2 = client.get(url, {"city": "Москва"})
+        assert r2.status_code == 200
+        assert r2.json() == {"suggestions": []}
+
+    def test_checkout_address_suggest_returns_empty_when_dadata_not_configured(
+        self, client, settings
+    ):
+        settings.DADATA_API_KEY = ""
+        user = get_user_model().objects.create_user(
+            username="u", email="u@ex.com", password="p"
+        )
+        client.force_login(user)
+        url = reverse("orders:checkout_address_suggest")
+        response = client.get(url, {"city": "Москва", "q": "Тверская"})
+        assert response.status_code == 200
+        assert response.json() == {"suggestions": []}
+
+    def test_checkout_address_suggest_uses_dadata_when_configured(
+        self, client, settings, monkeypatch
+    ):
+        settings.DADATA_API_KEY = "dadata-key"
+        user = get_user_model().objects.create_user(
+            username="u", email="u@ex.com", password="p"
+        )
+        client.force_login(user)
+
+        def mock_post(url, json=None, headers=None, timeout=None):
+            class Resp:
+                status_code = 200
+
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {
+                        "suggestions": [
+                            {
+                                "value": "г Москва, ул Тверская, д 1",
+                                "unrestricted_value": (
+                                    "123456, г Москва, ул Тверская, д 1"
+                                ),
+                            },
+                        ],
+                    }
+            return Resp()
+
+        monkeypatch.setattr("requests.post", mock_post)
+        url = reverse("orders:checkout_address_suggest")
+        response = client.get(url, {"city": "Москва", "q": "Тверская"})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["suggestions"]) == 1
+        assert "Тверская" in data["suggestions"][0]["address"]
+        assert data["suggestions"][0]["text"] == "г Москва, ул Тверская, д 1"
+
+
 class TestCheckoutTariffsView:
     """Тесты API тарифов CDEK по выбранному адресу / ПВЗ."""
 
@@ -172,7 +252,11 @@ class TestCheckoutTariffsView:
         client.force_login(user)
         product = _create_product()
         cart = Cart.objects.create(user=user)
-        CartItem.objects.create(cart=cart, product=product, quantity=1)
+        CartItem.objects.create(
+            cart=cart,
+            variant=product.variants.first(),
+            quantity=1
+        )
         return user, cart
 
     def test_checkout_tariffs_requires_login(self, client):
@@ -268,6 +352,75 @@ class TestCheckoutTariffsView:
         assert response.status_code == 200
         assert response.json() == {"tariffs": [], "city_code": 99}
 
+    def test_checkout_tariffs_door_uses_city_code_from_request(
+        self,
+        client,
+        monkeypatch,
+        settings
+    ):
+        """
+        При «до двери» расчёт по СДЭК: город из выбора (city_code в запросе).
+        """
+        settings.CDEK_FROM_CITY_CODE = 137
+        self._auth_client_with_cart(client)
+
+        def fake_tarifflist(from_city_code, to_city_code, packages):
+            assert from_city_code == 137
+            assert to_city_code == 44
+            return [
+                {
+                    "tariff_code": 137,
+                    "tariff_name": "Посылка склад-дверь",
+                    "delivery_sum": 500,
+                    "period_min": 2,
+                    "period_max": 3,
+                }
+            ]
+
+        monkeypatch.setattr(
+            order_views, "calculate_tarifflist", fake_tarifflist
+        )
+
+        url = reverse("orders:checkout_tariffs")
+        body = {"mode": "door", "city_code": 44, "city": "Москва"}
+        response = client.post(
+            url,
+            data=json.dumps(body),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["city_code"] == 44
+        assert len(data["tariffs"]) == 1
+        assert data["tariffs"][0]["tariff_code"] == 137
+
+    def test_checkout_tariffs_door_returns_empty_when_no_city(
+        self,
+        client,
+        monkeypatch,
+        settings
+    ):
+        """При «до двери» без city_code и без города в СДЭК — пустой список."""
+        settings.CDEK_FROM_CITY_CODE = 137
+        self._auth_client_with_cart(client)
+
+        def fake_search_empty(_name: str, limit: int = 1):
+            return []
+
+        monkeypatch.setattr(order_views, "search_cities", fake_search_empty)
+
+        url = reverse("orders:checkout_tariffs")
+        body = {"mode": "door", "city": "НесуществующийГород"}
+        response = client.post(
+            url,
+            data=json.dumps(body),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["tariffs"] == []
+        assert "city_code" not in data or data.get("city_code") is None
+
 
 class TestCreateCdekOrder:
     """Тесты регистрации заказа в CDEK (обёртка вокруг API)."""
@@ -296,10 +449,11 @@ class TestCreateCdekOrder:
             delivery_address="",
             comment="Комментарий",
         )
+        variant = product.variants.first()
         OrderItem.objects.create(
             order=order,
-            product=product,
-            price=product.discounted_price,
+            variant=variant,
+            price=variant.discounted_price,
             quantity=1,
         )
         return order

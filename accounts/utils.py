@@ -31,7 +31,8 @@ def send_email_async(
     message,
     from_email,
     recipient_list,
-    html_message=None
+    html_message=None,
+    bcc=None,
 ):
     """
     Асинхронно отправляет email через ThreadPoolExecutor.
@@ -42,6 +43,7 @@ def send_email_async(
         from_email: Отправитель (None = DEFAULT_FROM_EMAIL)
         recipient_list: Список получателей
         html_message: HTML версия письма (опционально)
+        bcc: Список адресов для скрытой копии (опционально)
     """
     executor = get_email_executor()
 
@@ -52,16 +54,16 @@ def send_email_async(
                 body=message,
                 from_email=from_email or settings.DEFAULT_FROM_EMAIL,
                 to=recipient_list,
+                bcc=bcc or [],
             )
 
-            # Добавляем HTML версию, если она есть
             if html_message:
                 email.attach_alternative(html_message, "text/html")
 
             email.send(fail_silently=False)
-            logger.info(f"Email отправлен: {subject} -> {recipient_list}")
+            logger.info("Email отправлен: %s -> %s", subject, recipient_list)
         except Exception as e:
-            logger.error(f"Ошибка отправки email: {e}", exc_info=True)
+            logger.error("Ошибка отправки email: %s", e, exc_info=True)
 
     executor.submit(_send)
 

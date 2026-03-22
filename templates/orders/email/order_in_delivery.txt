@@ -1,0 +1,16 @@
+Здравствуйте!
+
+Ваш заказ #{{ order.pk }} в интернет-магазине {{ site_name }} передан в службу доставки.
+{% if tracking_number %}
+
+Трек-номер для отслеживания: {{ tracking_number }}
+Отслеживание: https://www.cdek.ru/track.html?order_id={{ tracking_number }}
+{% endif %}
+
+Получатель: {{ order.recipient_name }}, {{ order.recipient_phone }}
+Доставка: СДЭК — {% if order.delivery_type == "courier" %}курьер{% else %}пункт выдачи{% endif %}
+
+Страница заказа: {{ order_url }}
+
+С уважением,
+{{ site_name }}

@@ -164,6 +164,14 @@ class Order(models.Model):
         db_index=True,
     )
     comment = models.TextField("Комментарий к заказу", blank=True)
+    email_paid_sent = models.BooleanField(
+        "Письмо об оплате отправлено",
+        default=False,
+    )
+    email_in_delivery_sent = models.BooleanField(
+        "Письмо о передаче в доставку отправлено",
+        default=False,
+    )
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 
@@ -180,14 +188,14 @@ class Order(models.Model):
     def recalc_totals(self):
         """Пересчитывает products_total по позициям и total."""
         self.products_total = sum(
-            item.line_total for item in self.items.select_related("product")
+            item.line_total for item in self.items.select_related("variant")
         )
         self.total = self.products_total + self.delivery_cost
         self.save(update_fields=["products_total", "total", "updated_at"])
 
 
 class OrderItem(models.Model):
-    """Позиция в заказе."""
+    """Позиция в заказе (вариант товара)."""
 
     order = models.ForeignKey(
         Order,
@@ -195,11 +203,11 @@ class OrderItem(models.Model):
         related_name="items",
         verbose_name="Заказ",
     )
-    product = models.ForeignKey(
-        "catalog.Product",
+    variant = models.ForeignKey(
+        "catalog.ProductVariant",
         on_delete=models.PROTECT,
         related_name="order_items",
-        verbose_name="Товар",
+        verbose_name="Вариант товара",
     )
     price = models.DecimalField(
         "Цена за единицу",
@@ -214,7 +222,7 @@ class OrderItem(models.Model):
         verbose_name_plural = "позиции заказа"
 
     def __str__(self):
-        return f"{self.product.name} × {self.quantity}"
+        return f"{self.variant.product.name} × {self.quantity}"
 
     @property
     def line_total(self):

@@ -228,9 +228,11 @@ def test_build_receipt_structure(settings):
 
     product = mock.MagicMock()
     product.name = "Тестовый товар"
+    variant = mock.MagicMock()
+    variant.product = product
 
     item = mock.MagicMock()
-    item.product = product
+    item.variant = variant
     item.price = Decimal("500.00")
     item.quantity = 2
 
@@ -274,9 +276,11 @@ def test_build_receipt_no_delivery(settings):
 
     product = mock.MagicMock()
     product.name = "Ещё один товар"
+    variant = mock.MagicMock()
+    variant.product = product
 
     item = mock.MagicMock()
-    item.product = product
+    item.variant = variant
     item.price = Decimal("1000.00")
     item.quantity = 1
 
