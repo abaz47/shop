@@ -158,6 +158,10 @@ CDEK_SENDER_PHONE = os.environ.get("CDEK_SENDER_PHONE", "")
 CDEK_SENDER_COMPANY = os.environ.get("CDEK_SENDER_COMPANY", "")
 YANDEX_MAPS_API_KEY = os.environ.get("YANDEX_MAPS_API_KEY", "")
 
+# DaData: подсказки и нормализация адреса при доставке «до двери»
+DADATA_API_KEY = os.environ.get("DADATA_API_KEY", "")
+DADATA_SECRET_KEY = os.environ.get("DADATA_SECRET_KEY", "")
+
 # T‑Банк (интернет-эквайринг)
 TBANK_TERMINAL_KEY = os.environ.get("TBANK_TERMINAL_KEY", "")
 TBANK_PASSWORD = os.environ.get("TBANK_PASSWORD", "")

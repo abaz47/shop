@@ -160,3 +160,50 @@ class TestCitiesSearch:
         assert len(results) == 1
         assert results[0]["code"] == 2
         assert "Санкт-Петербург" in results[0]["city"]
+
+
+class TestSearchCityCodeByAddressParts:
+    """Тесты поиска кода города по частям адреса (только справочник СДЭК)."""
+
+    def test_returns_none_for_empty_address(self):
+        assert cdek_services.search_city_code_by_address_parts("") is None
+        assert cdek_services.search_city_code_by_address_parts("   ") is None
+
+    def test_finds_code_by_region_name_in_address(self, monkeypatch):
+        cities = [
+            {
+                "code": 137,
+                "city": "Санкт-Петербург",
+                "region": "Ленинградская область",
+            },
+            {
+                "code": 439,
+                "city": "Великий Новгород",
+                "region": "Новгородская область",
+            },
+        ]
+        monkeypatch.setattr(
+            cdek_services,
+            "get_cities_cached",
+            lambda: cities,
+        )
+        address = (
+            "Россия, Новгородская область, Хвойнинский округ, "
+            "посёлок Юбилейный, ул. Юности, 1"
+        )
+        code = cdek_services.search_city_code_by_address_parts(address)
+        assert code == 439
+
+    def test_finds_code_by_city_name_in_address(self, monkeypatch):
+        cities = [
+            {"code": 44, "city": "Москва", "region": "Москва"},
+        ]
+        monkeypatch.setattr(
+            cdek_services,
+            "get_cities_cached",
+            lambda: cities,
+        )
+        code = cdek_services.search_city_code_by_address_parts(
+            "Москва, ул. Тверская, 1"
+        )
+        assert code == 44

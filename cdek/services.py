@@ -206,6 +206,44 @@ def search_cities(query: str, limit: int = 30) -> list[dict]:
     return result
 
 
+def search_city_code_by_address_parts(address: str) -> int | None:
+    """
+    Пытается определить код города СДЭК по строке адреса, используя только
+    справочник городов СДЭК (без сторонних API). Разбивает адрес на части
+    (по запятым), отбрасывает стоп-слова и по очереди ищет совпадение
+    в городе/регионе.
+    Для мелких населённых пунктов может вернуть код областного центра или
+    другого города региона — тариф будет приблизительным.
+    """
+    if not address or not address.strip():
+        return None
+    # Убираем типичные суффиксы, оставляем значимые названия
+    stop_words = (
+        "россия", "рф", "область", "обл", "район", "муниципальный", "округ",
+        "посёлок", "поселок", "деревня", "село", "город", "г ", "ул.", "улица",
+        "д.", "дом", "корп", "кв.", "квартира", "респ.", "республика",
+    )
+    parts = [p.strip() for p in address.split(",") if p.strip()]
+    seen_queries: set[str] = set()
+    for part in parts:
+        # Берём первое слово или пару слов (название региона/города)
+        words = [w for w in part.split() if w and w.lower() not in stop_words]
+        if not words:
+            continue
+        # Пробуем запрос из 1–2 первых значимых слов (не цифры)
+        for length in (2, 1):
+            query = " ".join(
+                w for w in words[:length] if not w.isdigit()
+            ).strip()
+            if len(query) < 2 or query in seen_queries:
+                continue
+            seen_queries.add(query)
+            matches = search_cities(query, limit=1)
+            if matches:
+                return matches[0].get("code")
+    return None
+
+
 def delivery_sum_to_decimal(data: dict[str, Any] | None) -> Decimal:
     """Из ответа калькулятора возвращает delivery_sum как Decimal или 0."""
     if not data or "delivery_sum" not in data:

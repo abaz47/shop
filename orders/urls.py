@@ -11,6 +11,11 @@ urlpatterns = [
     path("", views.order_list_redirect, name="list"),
     path("checkout/", views.checkout_view, name="checkout"),
     path("checkout/cities/", views.checkout_cities, name="checkout_cities"),
+    path(
+        "checkout/address-suggest/",
+        views.checkout_address_suggest,
+        name="checkout_address_suggest",
+    ),
     path("checkout/tariffs/", views.checkout_tariffs, name="checkout_tariffs"),
     path(
         "checkout/success/<int:order_id>/",

@@ -4,6 +4,7 @@
 import json
 from decimal import Decimal, ROUND_UP
 
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -30,22 +31,25 @@ from .services import create_cdek_order, get_cdek_tracking_number
 def _parse_tariffs_request_payload(request):
     """
     Разбирает JSON body запроса checkout_tariffs.
-    Возвращает (mode, point_type, to_city_code, city_name)
-    или (None, None, None, "") при ошибке.
+    Возвращает (mode, point_type, to_city_code, city_name, formatted_address).
+    При ошибке — (None, None, None, "", "").
     """
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
-        return None, None, None, ""
+        return None, None, None, "", ""
     mode = (payload.get("mode") or "").strip()
     point_type = (payload.get("point_type") or "").strip().upper()
     to_city_code = payload.get("city_code")
     city_name = (payload.get("city") or "").strip()
+    formatted_address = (
+        payload.get("formatted") or payload.get("address") or ""
+    ).strip()
     try:
         to_city_code = int(to_city_code)
     except (TypeError, ValueError):
         to_city_code = None
-    return mode, point_type, to_city_code, city_name
+    return mode, point_type, to_city_code, city_name, formatted_address
 
 
 def _is_allowed_tariff_family(name: str) -> bool:
@@ -433,6 +437,107 @@ def checkout_cities(request):
     return JsonResponse({"cities": cities})
 
 
+_DADATA_SUGGEST_URL = (
+    "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address"
+)
+
+
+def _dadata_suggestions_list_from_response(data: object) -> list:
+    if not isinstance(data, dict):
+        return []
+    raw = data.get("suggestions")
+    return raw if isinstance(raw, list) else []
+
+
+def _dadata_items_to_suggestions(raw: list) -> list[dict]:
+    result = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        val = item.get("value") or item.get("unrestricted_value") or ""
+        val = val.strip()
+        if val:
+            result.append({"text": val, "address": val})
+    return result
+
+
+def _dadata_post_suggest(
+    city: str,
+    q: str,
+    url: str,
+    headers: dict,
+    locations_boost: list | None,
+) -> dict:
+    payload: dict = {"query": f"{city}, {q}", "count": 10}
+    if locations_boost is not None:
+        payload["locations_boost"] = locations_boost
+    resp = requests.post(url, json=payload, headers=headers, timeout=5)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _dadata_address_suggest(city: str, q: str) -> tuple[list[dict], int]:
+    """
+    Подсказки адреса через DaData (нормализация).
+
+    Возвращает список подсказок и число сырых ответов от DaData.
+    Сначала запрос с locations_boost (город/посёлок), при пустом ответе —
+    без ограничения.
+    """
+    api_key = getattr(settings, "DADATA_API_KEY", "").strip()
+    if not api_key:
+        return [], 0
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Token {api_key}",
+    }
+    secret = getattr(settings, "DADATA_SECRET_KEY", "").strip()
+    if secret:
+        headers["X-Secret"] = secret
+    boost = [{"city": city}, {"settlement": city}]
+    try:
+        data = _dadata_post_suggest(
+            city, q, _DADATA_SUGGEST_URL, headers, boost
+        )
+    except (requests.RequestException, ValueError):
+        return [], 0
+    raw = _dadata_suggestions_list_from_response(data)
+    if not raw:
+        try:
+            data = _dadata_post_suggest(
+                city, q, _DADATA_SUGGEST_URL, headers, None
+            )
+            raw = _dadata_suggestions_list_from_response(data)
+        except (requests.RequestException, ValueError):
+            raw = []
+    result = _dadata_items_to_suggestions(raw)
+    return result, len(raw)
+
+
+@login_required
+@require_GET
+def checkout_address_suggest(request):
+    """
+    API: подсказки адреса в выбранном городе (DaData).
+    GET ?city=...&q=... — возвращает нормализованные адреса для выбора.
+    """
+    city = (request.GET.get("city") or "").strip()
+    q = (request.GET.get("q") or "").strip()
+    if not city or not q:
+        return JsonResponse({"suggestions": []})
+    if not getattr(settings, "DADATA_API_KEY", "").strip():
+        return JsonResponse({"suggestions": []})
+    suggestions, dadata_raw_count = _dadata_address_suggest(city, q)
+    out = {"suggestions": suggestions}
+    if settings.DEBUG:
+        out["_debug"] = {
+            "count": len(suggestions),
+            "dadata_raw_count": dadata_raw_count,
+        }
+    return JsonResponse(out)
+
+
 @login_required
 @require_http_methods(["POST"])
 def checkout_tariffs(request):
@@ -447,14 +552,16 @@ def checkout_tariffs(request):
     if not items.exists():
         return JsonResponse({"tariffs": []})
 
-    mode, point_type, to_city_code, city_name = _parse_tariffs_request_payload(
-        request
+    mode, point_type, to_city_code, city_name, formatted_address = (
+        _parse_tariffs_request_payload(request)
     )
     if mode is None:
         return JsonResponse({"error": "Некорректный JSON"}, status=400)
     if mode not in {"office", "door"}:
         return JsonResponse({"tariffs": []})
 
+    # Только СДЭК: город задаётся выбором из справочника (шаг 1 в форме).
+    # Для ПВЗ city_code приходит из виджета; для «до двери» — из поля города.
     if not to_city_code and city_name:
         matches = search_cities(city_name, limit=1)
         if matches:
