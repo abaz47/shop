@@ -2,6 +2,7 @@
 Тесты приложения core.
 """
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 
 from core.models import LegalPage
@@ -104,3 +105,45 @@ class TestLegalPageView:
             html = response.content.decode()
             assert expected_title in html
             assert "Страница в разработке" in html
+
+
+@pytest.mark.django_db
+class TestYandexWebmasterVerification:
+    """Тесты страницы подтверждения Яндекс.Вебмастера."""
+
+    @override_settings(YANDEX_WEBMASTER_VERIFICATION_KEY="key")
+    def test_verification_page_returns_200_for_matching_key(self, client):
+        """Правильный ключ возвращает верификационную страницу."""
+        response = client.get("/yandex_key.html")
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert "Verification: key" in html
+        assert "text/html" in response["Content-Type"]
+
+    @override_settings(YANDEX_WEBMASTER_VERIFICATION_KEY="key2")
+    def test_verification_page_returns_404_for_non_matching_key(self, client):
+        """Неверный ключ возвращает 404."""
+        response = client.get("/yandex_key2.html")
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestGoogleSearchConsoleVerification:
+    """Тесты страницы подтверждения Google Search Console."""
+
+    @override_settings(GOOGLE_SEARCH_CONSOLE_VERIFICATION_KEY="key")
+    def test_verification_page_returns_200_for_matching_key(self, client):
+        """Правильный ключ возвращает верификационный контент."""
+        response = client.get("/googlekey.html")
+        assert response.status_code == 200
+        text = response.content.decode()
+        assert (
+            text == "google-site-verification: googlekey.html"
+        )
+        assert "text/plain" in response["Content-Type"]
+
+    @override_settings(GOOGLE_SEARCH_CONSOLE_VERIFICATION_KEY="key")
+    def test_verification_page_returns_404_for_non_matching_key(self, client):
+        """Неверный ключ возвращает 404."""
+        response = client.get("/googlekey2.html")
+        assert response.status_code == 404

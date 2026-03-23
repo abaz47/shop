@@ -18,7 +18,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
-from django.urls import include, path
+from django.urls import include, path, re_path
 
 from core.sitemaps import ProductSitemap, StaticSitemap
 from core import views as core_views
@@ -29,6 +29,14 @@ handler500 = "core.views.server_error"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("robots.txt", core_views.robots_txt),
+    re_path(
+        r"^yandex_(?P<verification_key>[A-Za-z0-9]+)\.html$",
+        core_views.yandex_webmaster_verification,
+    ),
+    re_path(
+        r"^google(?P<verification_key>[A-Za-z0-9]+)\.html$",
+        core_views.google_search_console_verification,
+    ),
     path(
         "sitemap.xml",
         sitemap,

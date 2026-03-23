@@ -184,6 +184,21 @@ ORDER_NOTIFICATION_EMAIL = os.environ.get(
     "shop@yarmettaktik.shop",
 ).strip() or None
 
+# Подтверждение Яндекс Вебмастера:
+# файл доступен по /yandex_<ключ>.html с содержимым Verification: <ключ>.
+YANDEX_WEBMASTER_VERIFICATION_KEY = os.environ.get(
+    "YANDEX_WEBMASTER_VERIFICATION_KEY",
+    "",
+).strip()
+
+# Подтверждение Google Search Console:
+# файл доступен по /google<ключ>.html
+# с содержимым: google-site-verification: google<ключ>.html
+GOOGLE_SEARCH_CONSOLE_VERIFICATION_KEY = os.environ.get(
+    "GOOGLE_SEARCH_CONSOLE_VERIFICATION_KEY",
+    "",
+).strip()
+
 # Кэш: Redis при заданном REDIS_URL, иначе локальная память
 _redis_url = os.environ.get("REDIS_URL", "").strip()
 if _redis_url:

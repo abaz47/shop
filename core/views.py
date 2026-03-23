@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+from django.conf import settings
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
@@ -49,6 +50,34 @@ def robots_txt(request):
         "\n".join(lines),
         content_type="text/plain; charset=utf-8"
     )
+
+
+def yandex_webmaster_verification(request, verification_key):
+    """Отдаёт файл подтверждения Яндекс.Вебмастера по ключу из .env."""
+    expected_key = settings.YANDEX_WEBMASTER_VERIFICATION_KEY
+    if not expected_key or verification_key != expected_key:
+        raise Http404("Файл подтверждения не найден")
+
+    content = (
+        "<html>\n"
+        "  <head>\n"
+        "    <meta http-equiv=\"Content-Type\" "
+        "content=\"text/html; charset=UTF-8\">\n"
+        "  </head>\n"
+        f"  <body>Verification: {expected_key}</body>\n"
+        "</html>"
+    )
+    return HttpResponse(content, content_type="text/html; charset=utf-8")
+
+
+def google_search_console_verification(request, verification_key):
+    """Отдаёт файл подтверждения Google Search Console по ключу из .env."""
+    expected_key = settings.GOOGLE_SEARCH_CONSOLE_VERIFICATION_KEY
+    if not expected_key or verification_key != expected_key:
+        raise Http404("Файл подтверждения не найден")
+
+    content = f"google-site-verification: google{expected_key}.html"
+    return HttpResponse(content, content_type="text/plain; charset=utf-8")
 
 
 def page_not_found(request, exception):
