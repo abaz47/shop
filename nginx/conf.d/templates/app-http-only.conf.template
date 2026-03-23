@@ -2,6 +2,7 @@
 server {
     listen 80;
     server_name ${NGINX_SERVER_NAME};
+    client_max_body_size 25M;
 
     # ACME-challenge для certbot
     location /.well-known/acme-challenge/ {

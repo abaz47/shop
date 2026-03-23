@@ -1,6 +1,7 @@
 """
 Модели для юридических страниц и изображений сайта.
 """
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 
@@ -54,9 +55,21 @@ class SiteImage(models.Model):
         unique=True,
         help_text="Используется для получения ссылки на изображение",
     )
-    image = models.ImageField(
+    image = models.FileField(
         "Файл изображения",
         upload_to="site_images/%Y/%m/",
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=[
+                    "svg",
+                    "png",
+                    "jpg",
+                    "jpeg",
+                    "webp",
+                    "gif",
+                ]
+            )
+        ],
     )
     category = models.CharField(
         "Категория",

@@ -13,6 +13,7 @@ from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 
 from .models import UserProfile
+from .phone import normalize_russian_phone
 
 
 class RegistrationForm(UserCreationForm):
@@ -24,8 +25,17 @@ class RegistrationForm(UserCreationForm):
         label="Телефон",
         max_length=20,
         required=True,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-        help_text="Номер телефона для связи по заказам",
+        initial="+7",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "inputmode": "tel",
+                "autocomplete": "tel",
+            }
+        ),
+        help_text=(
+            "Номер телефона для связи и для передачи в службу доставки"
+        ),
     )
     email = forms.EmailField(
         label="Email",
@@ -55,7 +65,6 @@ class RegistrationForm(UserCreationForm):
     class Meta:
         model = UserCreationForm.Meta.model
         fields = (
-            "username",
             "email",
             "phone",
             "first_name",
@@ -67,7 +76,7 @@ class RegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Приводим все поля к единому Bootstrap-стилю
-        for name in ("username", "password1", "password2"):
+        for name in ("password1", "password2"):
             if name in self.fields:
                 css_classes = self.fields[name].widget.attrs.get("class", "")
                 css_classes = f"{css_classes} form-control".strip()
@@ -92,23 +101,27 @@ class RegistrationForm(UserCreationForm):
             )
         return email
 
+    def clean_phone(self):
+        return normalize_russian_phone(self.cleaned_data.get("phone", ""))
+
     def save(self, commit=True):
         """Сохраняет пользователя с неактивным аккаунтом."""
         user = super().save(commit=False)
-        user.email = self.cleaned_data["email"]
+        email = self.cleaned_data["email"]
+        user.username = email
+        user.email = email
         user.first_name = self.cleaned_data.get("first_name", "")
         user.last_name = self.cleaned_data.get("last_name", "")
         user.is_active = False  # Аккаунт неактивен до подтверждения email
         if commit:
             user.save()
-            phone = self.cleaned_data.get("phone", "")
+            phone = self.cleaned_data["phone"]
             try:
                 profile = user.profile
             except UserProfile.DoesNotExist:
                 profile = UserProfile.objects.create(user=user)
-            if phone:
-                profile.phone = phone
-                profile.save(update_fields=["phone"])
+            profile.phone = phone
+            profile.save(update_fields=["phone"])
         return user
 
 
@@ -118,9 +131,13 @@ class LoginForm(AuthenticationForm):
     """
 
     username = forms.CharField(
-        label="Имя пользователя или Email",
+        label="Email",
         widget=forms.TextInput(
-            attrs={"class": "form-control", "autofocus": True}
+            attrs={
+                "class": "form-control",
+                "autofocus": True,
+                "autocomplete": "username",
+            }
         ),
     )
     password = forms.CharField(

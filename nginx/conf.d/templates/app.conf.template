@@ -22,7 +22,7 @@ server {
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
-    client_max_body_size 10M;
+    client_max_body_size 25M;
 
     proxy_hide_header Referrer-Policy;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;

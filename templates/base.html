@@ -19,9 +19,10 @@
   <header class="site-header">
     <div class="container">
       <div class="header-content d-flex align-items-center justify-content-between">
-        {# Мобильное: бургер меню #}
-        <div class="d-lg-none me-2">
-          <button class="navbar-toggler header-navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mainNavOffcanvas" aria-controls="mainNavOffcanvas" aria-label="Открыть меню">
+        {# Левая зона: бургер на мобиле, спейсер на десктопе #}
+        <div class="header-left d-flex align-items-center">
+          <div class="header-left-spacer d-none d-lg-block" aria-hidden="true"></div>
+          <button class="navbar-toggler header-navbar-toggler d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mainNavOffcanvas" aria-controls="mainNavOffcanvas" aria-label="Открыть меню">
             <span class="navbar-toggler-icon"></span>
           </button>
         </div>
@@ -30,10 +31,10 @@
         {% get_site_image 'logo-header' as header_logo %}
         <a class="header-logo d-flex align-items-center" href="{% url 'catalog:product_list' %}">
           {% if header_logo %}
-            <img src="{{ header_logo.get_url }}" alt="{{ site_name }}" class="header-logo-img me-2">
+            <img src="{{ header_logo.get_url }}" alt="{{ site_name }}" class="header-logo-img">
             <span class="site-title visually-hidden">{{ site_name }}</span>
           {% else %}
-            <img src="{% static 'img/logo.png' %}" alt="{{ site_name }}" class="header-logo-img me-2" onerror="this.style.display='none'">
+            <img src="{% static 'img/logo.png' %}" alt="{{ site_name }}" class="header-logo-img" onerror="this.style.display='none'">
             <span class="site-title">{{ site_name }}</span>
           {% endif %}
         </a>
