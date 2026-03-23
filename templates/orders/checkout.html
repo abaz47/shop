@@ -55,7 +55,7 @@
           </div>
           <div class="card-body">
             <p class="text-body-secondary small mb-3">
-              Отправка из Санкт-Петербурга. Выберите способ доставки.
+              Отправка из Санкт-Петербурга в течение трех рабочих дней после оплаты заказа.
             </p>
 
             {# Скрытые поля формы #}
@@ -76,6 +76,9 @@
                 <input type="radio" class="btn-check" name="cdek_delivery_type" id="cdek-type-door" value="door">
                 <label class="btn btn-outline-secondary" for="cdek-type-door">До двери</label>
               </div>
+              <p class="form-text small mt-2 mb-0">
+                Тариф выбирается автоматически при выборе ПВЗ и при вводе корректного адреса для доставки до двери.
+              </p>
             </div>
 
             {% if not yandex_maps_api_key %}
@@ -111,7 +114,7 @@
                          placeholder="Начните вводить адрес в выбранном городе…" maxlength="300" autocomplete="off">
                   <div id="cdek-door-address-suggestions" class="list-group position-absolute start-0 end-0 top-100 mt-1 shadow" style="z-index: 1100; max-height: 220px; overflow-y: auto; display: none;"></div>
                 </div>
-                <p class="form-text small mt-1 mb-0">При вводе могут появиться подсказки. Выберите адрес из списка — после этого появятся варианты доставки.</p>
+                <p class="form-text small mt-1 mb-0">При вводе могут появиться подсказки. Выберите адрес из списка — тариф подберётся автоматически.</p>
               </div>
             </div>
 
@@ -123,10 +126,6 @@
 
             {# Тарифы и итог #}
             <div id="cdek-tariffs-loading" class="small text-muted mt-2 d-none">Рассчитываем доступные тарифы…</div>
-            <div id="cdek-tariffs-panel" class="mt-2 d-none">
-              <h4 class="h6 mb-2">Варианты доставки</h4>
-              <div id="cdek-tariffs-list" class="d-grid gap-2"></div>
-            </div>
             <div id="cdek-tariffs-error" class="alert alert-danger small mt-2 d-none"></div>
 
             {% if form.pvz_code.errors %}<div class="text-danger small mt-1">{{ form.pvz_code.errors }}</div>{% endif %}
@@ -209,8 +208,6 @@
   var deliveryModeInput   = document.getElementById('id_delivery_mode');
   var productsTotal = parseFloat("{{ products_total|floatformat:2 }}".replace(',', '.')) || 0;
 
-  var tariffsPanel   = document.getElementById('cdek-tariffs-panel');
-  var tariffsList    = document.getElementById('cdek-tariffs-list');
   var tariffsLoading = document.getElementById('cdek-tariffs-loading');
   var tariffsError   = document.getElementById('cdek-tariffs-error');
 
@@ -430,67 +427,20 @@
   }
 
   function clearTariffs() {
-    if (tariffsList) {
-      tariffsList.innerHTML = '';
-    }
-    if (tariffsPanel) {
-      tariffsPanel.classList.add('d-none');
+    if (deliveryTariffInput) {
+      deliveryTariffInput.value = '';
     }
   }
 
-  function renderTariffs(tariffs) {
+  function applyAutoTariff(tariffs) {
     clearTariffs();
-    if (!tariffsPanel || !tariffsList) return;
-    if (!tariffs || !tariffs.length) {
-      return;
+    if (!tariffs || !tariffs.length) return false;
+    var tariff = tariffs[0];
+    if (deliveryTariffInput) {
+      deliveryTariffInput.value = String(tariff.tariff_code || '');
     }
-
-    tariffs.forEach(function(tariff) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-outline-secondary w-100 text-start cdek-tariff-item';
-      btn.dataset.tariffCode = String(tariff.tariff_code);
-
-      var name = tariff.tariff_name || ('Тариф ' + (tariff.tariff_code || ''));
-      var desc = tariff.tariff_description || '';
-      var cost = Number(tariff.delivery_sum || 0);
-      var periodMin = tariff.period_min != null ? tariff.period_min : '—';
-      var periodMax = tariff.period_max != null ? tariff.period_max : '—';
-
-      btn.innerHTML =
-        '<div class="d-flex justify-content-between align-items-start">' +
-          '<div class="me-2">' +
-            '<div class="fw-semibold">' + name + '</div>' +
-            (desc ? '<div class="small text-body-secondary">' + desc + '</div>' : '') +
-          '</div>' +
-          '<div class="text-end">' +
-            '<div>' + formatRub(cost) + '</div>' +
-            '<div class="small text-body-secondary">' + periodMin + '–' + periodMax + ' дн.</div>' +
-          '</div>' +
-        '</div>';
-
-      btn.addEventListener('click', function() {
-        if (!tariffsList) return;
-        Array.prototype.forEach.call(
-          tariffsList.querySelectorAll('.cdek-tariff-item'),
-          function(el) {
-            el.classList.remove('active', 'btn-primary');
-            el.classList.add('btn-outline-secondary');
-          }
-        );
-        btn.classList.remove('btn-outline-secondary');
-        btn.classList.add('btn-primary', 'active');
-
-        if (deliveryTariffInput) {
-          deliveryTariffInput.value = String(tariff.tariff_code);
-        }
-        updateSummary(tariff);
-      });
-
-      tariffsList.appendChild(btn);
-    });
-
-    tariffsPanel.classList.remove('d-none');
+    updateSummary(tariff);
+    return true;
   }
 
   function loadTariffsFromBackend(mode, cityCode, cityName, pointType) {
@@ -537,12 +487,10 @@
           cityCodeInput.value = String(data.city_code);
         }
         var tariffs = data && Array.isArray(data.tariffs) ? data.tariffs : [];
-        renderTariffs(tariffs);
-        if (!tariffs.length && mode === 'office') {
-          var warning = document.getElementById('cdek-tariff-warning');
-          if (warning) {
-            warning.classList.remove('d-none');
-          }
+        var hasTariff = applyAutoTariff(tariffs);
+        var warning = document.getElementById('cdek-tariff-warning');
+        if (warning) {
+          warning.classList.toggle('d-none', hasTariff || mode !== 'office');
         }
       })
       .catch(function(error) {

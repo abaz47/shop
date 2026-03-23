@@ -53,13 +53,12 @@ def _parse_tariffs_request_payload(request):
 
 
 def _is_allowed_tariff_family(name: str) -> bool:
-    """Только тарифы «Посылка» (включая экономичную) и «Экспресс»."""
+    """Только тарифы семейства «Посылка» (включая экономичную)."""
     n = (name or "").lower().strip()
     return (
         n.startswith("посылка ")
         or n == "посылка"
         or n.startswith("экономичная посылка ")
-        or n.startswith("экспресс ")
     )
 
 
@@ -119,24 +118,20 @@ def _adjust_delivery_cost_for_customer(
     return tens
 
 
-def _adjust_delivery_period(value):
+def _adjust_delivery_period(value, extra_days: int):
     """
-    Прибавляет 1 день к сроку доставки, если значение задано.
+    Прибавляет дополнительное число дней к сроку доставки.
     """
     if value is None:
         return None
     try:
-        return int(value) + 1
+        return int(value) + extra_days
     except (TypeError, ValueError):
         return None
 
 
 def _filter_tariffs_for_response(raw_tariffs, mode: str, point_type: str):
     """Фильтрует и сортирует тарифы по mode и point_type."""
-    allowed = {"office", "pickup"}
-    if mode == "office":
-        allowed = {"pickup"} if point_type == "POSTAMAT" else {"office"}
-
     filtered = []
     for t in raw_tariffs:
         name_str = str(t.get("tariff_name") or "")
@@ -145,7 +140,7 @@ def _filter_tariffs_for_response(raw_tariffs, mode: str, point_type: str):
         kind = _tariff_kind_by_name(name_str)
         if not kind:
             continue
-        if mode == "office" and kind not in allowed:
+        if mode == "office" and kind != "office":
             continue
         if mode == "door" and kind != "door":
             continue
@@ -159,8 +154,12 @@ def _filter_tariffs_for_response(raw_tariffs, mode: str, point_type: str):
                 "tariff_name": t.get("tariff_name"),
                 "tariff_description": t.get("tariff_description"),
                 "delivery_mode": t.get("delivery_mode"),
-                "period_min": _adjust_delivery_period(t.get("period_min")),
-                "period_max": _adjust_delivery_period(t.get("period_max")),
+                "period_min": _adjust_delivery_period(
+                    t.get("period_min"), extra_days=1
+                ),
+                "period_max": _adjust_delivery_period(
+                    t.get("period_max"), extra_days=3
+                ),
                 "delivery_sum": adjusted_sum,
             }
         )
@@ -323,10 +322,10 @@ def _get_checkout_context(request, cart, items, products_total):
                         base_cost
                     )
                     delivery_period_min = _adjust_delivery_period(
-                        result.get("period_min")
+                        result.get("period_min"), extra_days=1
                     )
                     delivery_period_max = _adjust_delivery_period(
-                        result.get("period_max")
+                        result.get("period_max"), extra_days=3
                     )
                 else:
                     messages.warning(

@@ -496,6 +496,34 @@ footer {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
+/* Видео в описании товара: адаптивно вписываем iframe в ширину блока */
+.product-description {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.product-description iframe {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  margin: 0.75rem 0;
+  box-sizing: border-box;
+}
+
+.product-description img,
+.product-description video,
+.product-description embed,
+.product-description object {
+  max-width: 100% !important;
+  height: auto;
+}
+
 /* Адаптивные стили для мобильных устройств */
 @media (max-width: 991.98px) {
   /* Компактный хэдер на мобиле */
