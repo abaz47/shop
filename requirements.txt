@@ -19,3 +19,6 @@ requests>=2.28
 
 # Redis (кэш, rate limiting)
 django-redis>=5.4.0
+
+# Безопасная очистка HTML в описаниях
+bleach>=6.1

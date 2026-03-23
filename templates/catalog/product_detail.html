@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static catalog_html %}
 
 {% block title %}{{ product.name }}{% if selected_variant.color %} — {{ selected_variant.color }}{% endif %} — {{ site_name }}{% endblock %}
 
@@ -90,14 +90,22 @@
 
     <div class="col-lg-6">
       {% if selected_variant %}
-      <div class="mb-4">
-        {% if selected_variant.has_discount %}
-        <span class="text-decoration-line-through text-body-secondary me-2">{{ selected_variant.price|floatformat:0 }} ₽</span>
-        <span class="fs-4 text-danger fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
-        <span class="badge bg-danger ms-2">−{{ selected_variant.discount_percent }}%</span>
-        {% else %}
-        <span class="fs-4 fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
-        {% endif %}
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+          {% if selected_variant.has_discount %}
+          <span class="text-decoration-line-through text-body-secondary me-2">{{ selected_variant.price|floatformat:0 }} ₽</span>
+          <span class="fs-4 text-danger fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
+          <span class="badge bg-danger ms-2">−{{ selected_variant.discount_percent }}%</span>
+          {% else %}
+          <span class="fs-4 fw-bold">{{ selected_variant.discounted_price|floatformat:0 }} ₽</span>
+          {% endif %}
+        </div>
+        <form action="{% url 'cart:add' selected_variant.pk %}" method="post" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-primary">В корзину</button>
+        </form>
       </div>
 
       {% if variants|length > 1 %}
@@ -122,18 +130,12 @@
 
       {% if product.description %}
       <div class="product-description">
-        {{ product.description|linebreaks }}
+        {{ product.description|sanitize_product_description }}
       </div>
       {% else %}
       <p class="text-body-secondary">Описание отсутствует.</p>
       {% endif %}
 
-      <form action="{% url 'cart:add' selected_variant.pk %}" method="post" class="mt-4">
-        {% csrf_token %}
-        <input type="hidden" name="quantity" value="1">
-        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button type="submit" class="btn btn-primary">В корзину</button>
-      </form>
       {% else %}
       <p class="text-body-secondary">Нет доступных вариантов товара.</p>
       {% endif %}

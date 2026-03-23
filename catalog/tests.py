@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from .models import Category, Product, ProductVariant
+from .templatetags.catalog_html import sanitize_product_description
 
 
 class CatalogViewsTestCase(TestCase):
@@ -74,3 +75,31 @@ class CatalogViewsTestCase(TestCase):
             )
         )
         self.assertEqual(response.status_code, 404)
+
+
+class ProductDescriptionSanitizeTestCase(TestCase):
+    def test_allows_youtube_vk_rutube_iframe(self):
+        html = (
+            '<iframe src="https://www.youtube.com/embed/abc"></iframe>'
+            '<iframe src="https://vk.com/video_ext.php?id=1"></iframe>'
+            '<iframe src="https://rutube.ru/play/embed/123"></iframe>'
+            '<iframe src="//tltpls.vkvideo.ru/video_ext.php?id=1"></iframe>'
+        )
+        result = sanitize_product_description(html)
+        self.assertIn("youtube.com/embed/abc", result)
+        self.assertIn("vk.com/video_ext.php?id=1", result)
+        self.assertIn("rutube.ru/play/embed/123", result)
+        self.assertIn("//tltpls.vkvideo.ru/video_ext.php?id=1", result)
+        self.assertIn("<iframe", result)
+
+    def test_blocks_iframe_from_other_hosts(self):
+        html = '<iframe src="https://evil.example.com/embed/123"></iframe>'
+        result = sanitize_product_description(html)
+        self.assertNotIn("<iframe", result)
+        self.assertNotIn("evil.example.com", result)
+
+    def test_strips_script_tags(self):
+        html = '<p>ok</p><script>alert("xss")</script>'
+        result = sanitize_product_description(html)
+        self.assertIn("<p>ok</p>", result)
+        self.assertNotIn("<script>", result)
