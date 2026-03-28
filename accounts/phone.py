@@ -1,40 +1,78 @@
 """
-Нормализация и проверка российских телефонных номеров.
+Нормализация и проверка телефонных номеров.
 """
 import re
 
+import phonenumbers
 from django.core.exceptions import ValidationError
+from phonenumbers import NumberParseException, PhoneNumberFormat
 
-RU_PHONE_ERROR = (
-    "Введите российский номер: 10 цифр после +7. "
-    "Допускается ввод с 8 вместо +7."
+# Регионы libphonenumber для стран бывшего СССР (для регистрации в магазине).
+# +7 покрывает RU и KZ; остальные — отдельные коды стран.
+CIS_REGION_CODES = frozenset(
+    {"RU", "KZ", "BY", "UA", "AM", "AZ", "GE", "KG", "MD", "TJ", "TM", "UZ"}
+)
+
+PHONE_ERROR = (
+    "Укажите номер в международном формате с кодом страны: "
+    "«+» и далее цифры (например +7 912 345-67-89, +375 29 123-45-67)."
+)
+
+PHONE_ERROR_REGION = (
+    "Допускаются номера стран СНГ и ближнего зарубежья."
 )
 
 
-def normalize_russian_phone(value):
-    """
-    Проверяет российский номер и приводит к виду +7XXXXXXXXXX.
+def _digits_only(value):
+    return re.sub(r"\D", "", str(value).strip())
 
-    Ожидается 10 цифр национальной части (после кода страны 7):
-    мобильный (9xx…) или городской (3xx / 4xx / 8xx и т.д.).
+
+def _prepare_e164_candidate(raw):
+    """
+    Строит строку для parse():
+    «+» и полный номер, либо только цифры полного международного номера.
+    """
+    raw = str(raw).strip()
+    if not raw:
+        return None
+
+    if raw.startswith("+"):
+        return raw
+
+    digits = _digits_only(raw)
+    if not digits:
+        return None
+
+    return "+" + digits
+
+
+def normalize_cis_phone(value):
+    """
+    Проверяет номер (страны СНГ по списку CIS_REGION_CODES) и возвращает E.164.
+
+    Ожидается международный номер с кодом страны
+    (ввод с «+» или те же цифры без «+»).
     """
     if value is None:
         value = ""
-    digits = re.sub(r"\D", "", str(value).strip())
-    if not digits:
-        raise ValidationError(RU_PHONE_ERROR)
+    raw = str(value).strip()
+    if not raw:
+        raise ValidationError(PHONE_ERROR)
 
-    if digits[0] == "8" and len(digits) == 11:
-        digits = "7" + digits[1:]
+    to_parse = _prepare_e164_candidate(raw)
+    if not to_parse:
+        raise ValidationError(PHONE_ERROR)
 
-    if digits.startswith("7") and len(digits) == 11:
-        national = digits[1:]
-    elif len(digits) == 10:
-        national = digits
-    else:
-        raise ValidationError(RU_PHONE_ERROR)
+    try:
+        num = phonenumbers.parse(to_parse, None)
+    except NumberParseException:
+        raise ValidationError(PHONE_ERROR) from None
 
-    if len(national) != 10 or not re.match(r"^[3489]\d{9}$", national):
-        raise ValidationError(RU_PHONE_ERROR)
+    if not phonenumbers.is_valid_number(num):
+        raise ValidationError(PHONE_ERROR)
 
-    return "+7" + national
+    region = phonenumbers.region_code_for_number(num)
+    if region not in CIS_REGION_CODES:
+        raise ValidationError(PHONE_ERROR_REGION)
+
+    return phonenumbers.format_number(num, PhoneNumberFormat.E164)

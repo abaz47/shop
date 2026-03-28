@@ -13,7 +13,7 @@ from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
 
 from .models import UserProfile
-from .phone import normalize_russian_phone
+from .phone import normalize_cis_phone
 
 
 class RegistrationForm(UserCreationForm):
@@ -31,10 +31,12 @@ class RegistrationForm(UserCreationForm):
                 "class": "form-control",
                 "inputmode": "tel",
                 "autocomplete": "tel",
+                "placeholder": "+7 или +375, +998…",
             }
         ),
         help_text=(
-            "Номер телефона для связи и для передачи в службу доставки"
+            "Международный формат с кодом страны, начиная с + "
+            "(Россия, Казахстан, Беларусь и другие страны СНГ)."
         ),
     )
     email = forms.EmailField(
@@ -102,7 +104,7 @@ class RegistrationForm(UserCreationForm):
         return email
 
     def clean_phone(self):
-        return normalize_russian_phone(self.cleaned_data.get("phone", ""))
+        return normalize_cis_phone(self.cleaned_data.get("phone", ""))
 
     def save(self, commit=True):
         """Сохраняет пользователя с неактивным аккаунтом."""
@@ -220,6 +222,12 @@ class ProfileEditForm(forms.ModelForm):
         if self.instance and self.instance.user:
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
+
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
+        if not phone:
+            return ""
+        return normalize_cis_phone(phone)
 
     def save(self, commit=True):
         """Сохраняет изменения в профиле и пользователе (без смены email)."""

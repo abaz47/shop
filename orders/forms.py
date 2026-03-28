@@ -3,6 +3,8 @@
 """
 from django import forms
 
+from accounts.phone import normalize_cis_phone
+
 
 class CheckoutForm(forms.Form):
     """Форма оформления заказа (получатель и доставка)."""
@@ -24,7 +26,7 @@ class CheckoutForm(forms.Form):
         widget=forms.TextInput(
             attrs={
                 "class": "form-control",
-                "placeholder": "+7 (999) 123-45-67",
+                "placeholder": "+7…, +375…, +998…",
                 "autocomplete": "tel",
             }
         ),
@@ -124,6 +126,11 @@ class CheckoutForm(forms.Form):
                     "delivery_address",
                     profile.address or "",
                 )
+
+    def clean_recipient_phone(self):
+        return normalize_cis_phone(
+            self.cleaned_data.get("recipient_phone", "")
+        )
 
     def clean(self):
         cleaned_data = super().clean()
