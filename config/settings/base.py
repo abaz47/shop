@@ -181,7 +181,7 @@ TBANK_DELIVERY_VAT_RATE = os.environ.get("TBANK_DELIVERY_VAT_RATE", "none")
 # Email для копии писем о заказах (при оформлении заказа).
 ORDER_NOTIFICATION_EMAIL = os.environ.get(
     "ORDER_NOTIFICATION_EMAIL",
-    "shop@yarmettaktik.shop",
+    "shop@yourdomain.com",
 ).strip() or None
 
 # Подтверждение Яндекс Вебмастера:
